@@ -33,7 +33,7 @@ string getValidTxt(string str) {
 	return str;
 }
 string getFileName(int i) {
-	string fileName = "../Search_Engine/dataIn";
+	string fileName = "../SearchEngine/Data/dataIn";
 	for (int j = 0; j < floor(log10(searchEngineNumOfDataFiles)) - floor(log10(i + 1)); ++j)
 		fileName += "0";
 	fileName += toString(i + 1) + ".txt";
@@ -169,7 +169,7 @@ void SearchEngine::writeText(int i, string Word) {
 		dataIn >> txt;
 		string prefix = getPrefix(txt);
 		string suffix = getSuffix(txt);
-		if (getValidTxt(txt) == Word) {
+		if (getValidTxt(txt) == getValidTxt(Word)) {
 			cout << prefix;
 			WriteInColor(blueWithBG, getValidWord(txt));
 			cout << suffix;

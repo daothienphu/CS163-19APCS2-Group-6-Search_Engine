@@ -1,5 +1,6 @@
 To-dos:  
 (important)  
+Fix problem with special characters.  
 Add support for search operator.  
 Add support for history and suggestion.  
 Remove English stopwords when they appear in queries.  
