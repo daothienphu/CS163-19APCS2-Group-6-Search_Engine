@@ -1,6 +1,8 @@
 #include "SearchEngine.h"
+#include "vector"
 
 #pragma region Utilities
+const string s[173]={"a","about","above","after","again","against","all","am","an","and","any","are","aren't","as","at","be","because","been","before","being","below","between","both","but","by","can't","cannot","could","couldn't","did","didn't","do","does","doesn't","doing","don't","down","during","each","few","for","from","further","had","hadn't","has","hasn't","have","haven't","having","he","he'd","he'll","he's","her","here","here's","hers","herself","him","himself","his","how","how's","i","i'd","i'll","i'm","i've","if","in","into","is","isn't","it","it's","its","itself","let's","me","more","most","mustn't","my","myself","no","nor","not","of","off","on","once","only","or","other","ought","our","ours	ourselves","out","over","own","same","shan't","she","she'd","she'll","she's","should","shouldn't","so","some","such","than","that","that's","the","their","theirs","them","themselves","then","there","there's","these","they","they'd","they'll","they're","they've","this","those","through","to","too","under","until","up","very","was","wasn't","we","we'd","we'll","we're","we've","were","weren't","what","what's","when","when's","where","where's","which","while","who","who's","whom","why","why's","with","won't","would","wouldn't","you","you'd","you'll","you're","you've","your","yours","yourself","yourselves"};
 string toString(int i) {
 	string str;
 	if (!i)
@@ -10,6 +12,26 @@ string toString(int i) {
 		i /= 10;
 	}
 	return str;
+}
+int countSpaces(string str) {
+	int k = 0;
+	for (int i = 1; i < str.length() - 1; i++)
+		if (str.at(i) == ' ' && str.at(i - 1) != ' ' && str.at(i + 1) != ' ') k++;
+	return k;
+}
+vector<string> split(string queries, int& l) {
+	l = countSpaces(queries) + 1;
+	vector<string> arr;
+	int old_pos = 0;
+	for (int i = 1; i < queries.length() - 1; i++)
+		if (queries.at(i) == ' ' && queries.at(i - 1) != ' ' && queries.at(i + 1) != ' ') {
+			while (queries.at(old_pos) == ' ') old_pos++;
+			arr.push_back(queries.substr(old_pos, i - old_pos));
+			old_pos = i;
+		}
+	while (queries.at(old_pos) == ' ') old_pos++;
+	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
+	return arr;
 }
 string toLower(string str) {
 	for (int i = 0; i < str.length(); ++i)
@@ -49,6 +71,9 @@ string getPrefix(string txt) {
 		i++;
 	}
 	return pre;
+}
+string removeStopWord(string queries) {
+	return queries;
 }
 string getSuffix(string txt) {
 	string suf;
