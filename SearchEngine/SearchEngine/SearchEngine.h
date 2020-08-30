@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <windows.h>
+#include <vector>
 using namespace std;
 
 #define cyan 11
@@ -12,6 +13,23 @@ using namespace std;
 struct TrieNode {
 	TrieNode* p[trieCharSize]{ 0 };
 	bool end = false;
+};
+struct Word {
+	string word;
+	int v1 = -1, v2 = -1;
+	int function = 0;
+
+	Word(string w) {
+		word = w;
+	}
+	/*
+	Function
+	1 - Normal word
+	2 - $ Price tag
+	3 - # Hash tag
+	4 - * Place holder
+	5 - $..$ Range price
+	*/
 };
 struct Trie {
 	TrieNode* root = nullptr;
@@ -31,6 +49,8 @@ struct SearchEngine {
 	void input(ifstream& in);
 	void search(string Word);
 	void writeText(int i, string Word);
+	
+	vector<Word> breakDown(string txt);
 
 	void delPointers();
 
