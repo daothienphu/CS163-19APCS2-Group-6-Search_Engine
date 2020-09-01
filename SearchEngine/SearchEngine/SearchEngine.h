@@ -51,6 +51,7 @@ struct SearchEngine {
 	void writeText(int i, string Word);
 	
 	vector<Word> breakDown(string txt);
+	void input_stop_words(string path);
 
 	void delPointers();
 

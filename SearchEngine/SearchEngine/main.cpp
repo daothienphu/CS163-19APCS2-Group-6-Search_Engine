@@ -6,6 +6,7 @@ int main() {
 	ifstream in{ "../Search_Engine/dataList.txt" };
 	SearchEngine se;
 	se.input(in);
+	se.input_stop_words("../Search_Engine/stopWords.txt");
 	
 	string key;
 
@@ -14,7 +15,7 @@ int main() {
 		getline(cin, key);
 		if (key == "exit")
 			break;
-		system("cls");
+		//system("cls");
 		cout << key << endl;
 		vector<Word> word = se.breakDown(key);
 		
