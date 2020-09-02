@@ -1,6 +1,8 @@
 #include "SearchEngine.h"
+#include "vector"
 
 #pragma region Utilities
+vector<string> stop_words;
 string toString(int i) {
 	string str;
 	if (!i)
@@ -10,6 +12,19 @@ string toString(int i) {
 		i /= 10;
 	}
 	return str;
+}
+vector<string> split(string queries) {
+	vector<string> arr;
+	int old_pos = 0;
+	for (int i = 1; i < queries.length() - 1; i++)
+		if (queries[i] == ' ' && queries[size_t(i) - 1] != ' ' && queries[size_t(i) + 1] != ' ') {
+			while (queries[old_pos] == ' ') old_pos++;
+			arr.push_back(queries.substr(old_pos, size_t(i) - old_pos));
+			old_pos = i;
+		}
+	while (queries[old_pos] == ' ') old_pos++;
+	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
+	return arr;
 }
 string toLower(string str) {
 	for (int i = 0; i < str.length(); ++i)
@@ -49,6 +64,10 @@ string getPrefix(string txt) {
 		i++;
 	}
 	return pre;
+}
+bool checkStopWord(string txt) {
+	for (int i = 0; i < stop_words.size(); i++) if (stop_words[i].compare(txt) == 0) return true;
+	return false;
 }
 string getSuffix(string txt) {
 	string suf;
@@ -181,6 +200,58 @@ void SearchEngine::writeText(int i, string Word) {
 		cout << " ";
 	}
 	cout << endl << endl;
+}
+void executeWord(Word& word) {
+	switch (word.word[0]) {
+	case '#':
+		word.function = 2;
+		break;
+	case '$':
+		word.function = 1;
+		break;
+	}
+}
+vector<Word> SearchEngine::breakDown(string txt) {
+	vector<Word> w;
+	vector<string> s = split(txt);
+	for (int i = 0; i < s.size(); i++) {
+		if (checkStopWord(s[i])) continue;
+		Word word(s[i]);
+		executeWord(word);
+		w.push_back(word);
+		if (false) continue;
+		cout << "Word ["<<i<<"] :";
+		switch (word.function) {
+		case 0:
+			cout << " (N) ";
+			break;
+		case 1:
+			cout << " ($) ";
+			break;
+		case 2:
+			cout << " (#) ";
+			break;
+		}
+		cout << word.word<<endl;
+	}
+	return w;
+}
+void SearchEngine::input_stop_words(string path) {
+	ifstream input;
+	input.open(path);
+	string tmp;
+	if (!input.is_open()) {
+		cout << "Cannot read stop words"<<endl;
+		return;
+	}
+	while (!input.eof()) {
+		input >> tmp;
+		{
+			stop_words.push_back(tmp);
+			tmp = "";
+		}
+	}
+	cout << "Finish reading stop words with " + stop_words.size();
 }
 
 void SearchEngine::delPointers() {
