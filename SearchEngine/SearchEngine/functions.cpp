@@ -81,16 +81,18 @@ string getSuffix(string txt) {
 	return suf;
 }
 void WriteInColor(int color, string text) {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
 	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
 	int originalColor = cbInfo.wAttributes;
 	SetConsoleTextAttribute(hConsole, color);
 	cout << text;
-	SetConsoleTextAttribute(hConsole, originalColor);
+	SetConsoleTextAttribute(hConsole, originalColor);*/
+	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
 #pragma endregion
-#pragma region Tree implementation
+
+#pragma region Trie implementation
 void Trie::input(ifstream& in) {
 	while (!in.eof()) {
 		string str;
@@ -156,6 +158,7 @@ void Trie::display() {
 	displayWords(root, "");
 }
 #pragma endregion
+
 #pragma region Search Engine Algorithms
 void SearchEngine::input(ifstream& in) {
 	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
