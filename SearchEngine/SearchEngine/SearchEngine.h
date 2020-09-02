@@ -1,12 +1,12 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#include <windows.h>
+//#include <windows.h>
 using namespace std;
 
-#define cyan 11
-#define blueWithBG 23
-#define trieCharSize 36 //a->z, 0->9
+#define cyan 36
+#define blueWithBG 44
+#define trieCharSize 36 //a->z, 0->9, *#$, 1st
 #define searchEngineNumOfDataFiles 10
 
 struct TrieNode {
