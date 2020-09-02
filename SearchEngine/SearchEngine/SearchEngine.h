@@ -1,11 +1,12 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#include <windows.h>
+#include <cmath>
+//#include <windows.h>
 using namespace std;
 
-#define cyan 11
-#define blueWithBG 23
+#define cyan 36
+#define blueWithBG 44
 #define trieCharSize 36 //a->z, 0->9
 #define searchEngineNumOfDataFiles 10
 
@@ -13,6 +14,7 @@ struct TrieNode {
 	TrieNode* p[trieCharSize]{ 0 };
 	bool end = false;
 };
+
 struct Trie {
 	TrieNode* root = nullptr;
 	void input(ifstream& in);

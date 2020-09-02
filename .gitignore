@@ -322,7 +322,10 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 
-# OpenCover UI analysis results
+# OpenCo
+
+
+ver UI analysis results
 OpenCover/
 
 # Azure Stream Analytics local run output
@@ -348,3 +351,8 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+CLion
+CMakeLists.txt
+cmake-build-debug
+

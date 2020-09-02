@@ -1,7 +1,8 @@
 #include "SearchEngine.h"
 
 int main() {
-	ifstream in{ "../Search_Engine/dataList.txt" };
+	ifstream in;
+	in.open("Data/dataList.txt");
 	SearchEngine se;
 	se.input(in);
 
@@ -11,7 +12,7 @@ int main() {
 		cin >> key;
 		if (key == "exit")
 			break;
-		system("cls");
+		//system("cls");
 		se.search(key);
 	}
 	return 0;

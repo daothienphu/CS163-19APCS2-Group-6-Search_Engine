@@ -33,7 +33,7 @@ string getValidTxt(string str) {
 	return str;
 }
 string getFileName(int i) {
-	string fileName = "../SearchEngine/Data/dataIn";
+	string fileName = "Data/dataIn";
 	for (int j = 0; j < floor(log10(searchEngineNumOfDataFiles)) - floor(log10(i + 1)); ++j)
 		fileName += "0";
 	fileName += toString(i + 1) + ".txt";
@@ -62,13 +62,13 @@ string getSuffix(string txt) {
 	return suf;
 }
 void WriteInColor(int color, string text) {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
-	int originalColor = cbInfo.wAttributes;
-	SetConsoleTextAttribute(hConsole, color);
-	cout << text;
-	SetConsoleTextAttribute(hConsole, originalColor);
+//	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+//	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
+//	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
+//	int originalColor = cbInfo.wAttributes;
+//	SetConsoleTextAttribute(hConsole, color);
+	cout << "\x1B[" << color << "m" << text << "\033[0m";
+	//SetConsoleTextAttribute(hConsole, originalColor);
 }
 #pragma endregion
 #pragma region Tree implementation
@@ -185,7 +185,7 @@ void SearchEngine::delPointers() {
 		if (data[i])
 			data[i]->delPointers(data[i]->root);
 	}
-	delete[]data;
+	//delete [] data;
 }
 
 //for debug
