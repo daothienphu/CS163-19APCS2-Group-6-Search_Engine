@@ -1,19 +1,34 @@
 #include "SearchEngine.h"
+#include "iostream"
+#include "string"
 
 int main() {
 	ifstream in;
-	in.open("Data/dataList.txt");
-	SearchEngine se;
-	se.input(in);
+    SearchEngine se;
 
+    start();
+	in.open("Data/___index.txt");
+	se.loadDataList(in);
+	in.close();
+
+	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
+
+	se.input();
+	se.input_stop_words("stopWords.txt");
+	
 	string key;
+
 	while (1) {
 		cout << "What do you want to search? ('exit' to exit) ";
-		cin >> key;
+		getline(cin, key);
 		if (key == "exit")
 			break;
-		//system("cls");
+        start();
 		se.search(key);
+//		cout << key << endl;
+//		vector<Word> word = se.breakDown(key);
+//
+//		//se.search(key);
 	}
 	return 0;
 }

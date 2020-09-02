@@ -1,6 +1,23 @@
 #include "SearchEngine.h"
+#include "vector"
+
+#pragma region Time Measurement
+
+clock_t ___start_time = clock();
+
+void start() {
+    ___start_time = clock();
+}
+
+double close() {
+    return double(clock()-___start_time) / CLOCKS_PER_SEC;
+}
+
+#pragma endregion
 
 #pragma region Utilities
+
+vector<string> stop_words;
 string toString(int i) {
 	string str;
 	if (!i)
@@ -10,6 +27,19 @@ string toString(int i) {
 		i /= 10;
 	}
 	return str;
+}
+vector<string> split(string queries) {
+	vector<string> arr;
+	int old_pos = 0;
+	for (int i = 1; i < queries.length() - 1; i++)
+		if (queries[i] == ' ' && queries[size_t(i) - 1] != ' ' && queries[size_t(i) + 1] != ' ') {
+			while (queries[old_pos] == ' ') old_pos++;
+			arr.push_back(queries.substr(old_pos, size_t(i) - old_pos));
+			old_pos = i;
+		}
+	while (queries[old_pos] == ' ') old_pos++;
+	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
+	return arr;
 }
 string toLower(string str) {
 	for (int i = 0; i < str.length(); ++i)
@@ -32,13 +62,14 @@ string getValidTxt(string str) {
 	str = toLower(str);
 	return str;
 }
-string getFileName(int i) {
-	string fileName = "Data/dataIn";
-	for (int j = 0; j < floor(log10(searchEngineNumOfDataFiles)) - floor(log10(i + 1)); ++j)
-		fileName += "0";
-	fileName += toString(i + 1) + ".txt";
-	return fileName;
-}
+//string getFileName(int i) {
+//	string fileName = "Data/dataIn";
+//	for (int j = 0; j < floor(log10(searchEngineNumOfDataFiles)) - floor(log10(i + 1)); ++j)
+//		fileName += "0";
+//	fileName += toString(i + 1) + ".txt";
+//	return fileName;
+//}
+
 string getPrefix(string txt) {
 	string pre;
 	int i = 0;
@@ -49,6 +80,10 @@ string getPrefix(string txt) {
 		i++;
 	}
 	return pre;
+}
+bool checkStopWord(string txt) {
+	for (int i = 0; i < stop_words.size(); i++) if (stop_words[i].compare(txt) == 0) return true;
+	return false;
 }
 string getSuffix(string txt) {
 	string suf;
@@ -62,22 +97,25 @@ string getSuffix(string txt) {
 	return suf;
 }
 void WriteInColor(int color, string text) {
-//	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-//	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-//	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
-//	int originalColor = cbInfo.wAttributes;
-//	SetConsoleTextAttribute(hConsole, color);
+	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
+	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
+	int originalColor = cbInfo.wAttributes;
+	SetConsoleTextAttribute(hConsole, color);
+	cout << text;
+	SetConsoleTextAttribute(hConsole, originalColor);*/
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
-	//SetConsoleTextAttribute(hConsole, originalColor);
 }
 #pragma endregion
-#pragma region Tree implementation
+
+#pragma region Trie implementation
+
 void Trie::input(ifstream& in) {
-	while (!in.eof()) {
-		string str;
-		in >> str;
-		insert(str);
-	}
+    string str;
+	do {
+		in >> str; //cout << str << " ";
+		if(str.size()) insert(str);
+	} while (in.good()); //cout << endl;
 }
 void Trie::insert(string Word) {
 	if (!root)
@@ -137,15 +175,35 @@ void Trie::display() {
 	displayWords(root, "");
 }
 #pragma endregion
+
 #pragma region Search Engine Algorithms
-void SearchEngine::input(ifstream& in) {
+
+void SearchEngine::loadDataList(ifstream &in) {
+    string filename;
+    while (in >> filename)
+        if (filename.size()) dataList.push_back(filename);
+
+    searchEngineNumOfDataFiles = dataList.size();
+    data = new Trie* [searchEngineNumOfDataFiles] {0};
+
+    cout << "Data list loaded in " << close() << " second(s).\n";
+}
+
+void SearchEngine::input() {
+    int progress = 0, p;
+
 	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-		string fileName = getFileName(i);
+	    p = trunc((double) 100 * i / searchEngineNumOfDataFiles);
+	    if (p / 25 > progress) cout << 25 * (++progress) << "% files loaded in " << close() << " second(s).\n";
+
+		string fileName = "Data/" + dataList[i];
 		ifstream dataIn{ fileName };
 		if (!data[i])
 			data[i] = new Trie;
 		data[i]->input(dataIn);
 	}
+
+    cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
 void SearchEngine::search(string Word) {
 	int count = 0;
@@ -156,10 +214,13 @@ void SearchEngine::search(string Word) {
 		}
 		if (count == 5) break;
 	}
-	if (!count) cout << "No matches found." << endl << endl;
+	if (!count)
+	    cout << "No matches found." << endl << endl;
+	else
+	    cout << count << " matches found in " << close() << " second(s).\n\n";
 }
 void SearchEngine::writeText(int i, string Word) {
-	string fileName = getFileName(i);
+	string fileName = "Data/" + dataList[i];
 	ifstream dataIn{ fileName };
 	string msg = "Found match(es) from " + fileName;
 	WriteInColor(cyan, msg);
@@ -178,6 +239,58 @@ void SearchEngine::writeText(int i, string Word) {
 		cout << " ";
 	}
 	cout << endl << endl;
+}
+void executeWord(Word& word) {
+	switch (word.word[0]) {
+	case '#':
+		word.function = 2;
+		break;
+	case '$':
+		word.function = 1;
+		break;
+	}
+}
+vector<Word> SearchEngine::breakDown(string txt) {
+	vector<Word> w;
+	vector<string> s = split(txt);
+	for (int i = 0; i < s.size(); i++) {
+		if (checkStopWord(s[i])) continue;
+		Word word(s[i]);
+		executeWord(word);
+		w.push_back(word);
+		if (false) continue;
+		cout << "Word ["<<i<<"] :";
+		switch (word.function) {
+		case 0:
+			cout << " (N) ";
+			break;
+		case 1:
+			cout << " ($) ";
+			break;
+		case 2:
+			cout << " (#) ";
+			break;
+		}
+		cout << word.word<<endl;
+	}
+	return w;
+}
+void SearchEngine::input_stop_words(string path) {
+	ifstream input;
+	input.open(path);
+	string tmp;
+	if (!input.is_open()) {
+		cout << "Cannot read stop words"<<endl;
+		return;
+	}
+	while (!input.eof()) {
+		input >> tmp;
+		{
+			stop_words.push_back(tmp);
+			tmp = "";
+		}
+	}
+	cout << "Finish reading stop words with " << stop_words.size() << endl;
 }
 
 void SearchEngine::delPointers() {
