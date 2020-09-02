@@ -13,9 +13,22 @@ using namespace std;
 void start();
 double close();
 
+struct FileNode {
+    int file;
+    FileNode *Next;
+};
+
 struct TrieNode {
+    static int numTrieNode;
 	TrieNode* p[trieCharSize]{ 0 };
-	bool end = false;
+	bool stopWord = false;
+	FileNode *fileRoot = nullptr;
+
+	TrieNode() {
+	    stopWord = false;
+	    fileRoot = nullptr;
+	    numTrieNode++;
+	}
 };
 
 struct Word {
@@ -38,9 +51,9 @@ struct Word {
 
 struct Trie {
 	TrieNode* root = nullptr;
-	void input(ifstream& in);
-	void insert(string Word);
-	bool search(string Word);
+	void input(ifstream& in, int file);
+	void insert(string &Word, int file); //file == -1 if Word is stopword
+    void search(string &Word, int ans[], int &count);
 
 	void delPointers(TrieNode* root);
 
@@ -50,19 +63,19 @@ struct Trie {
 };
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
-	Trie** data;
     vector<string> dataList;
+    Trie *root = nullptr;
 
 	void loadDataList(ifstream &in);
 
 	void input();
-	void search(string Word);
-	void writeText(int i, string Word);
+	void search(string &Word);
+	void writeText(int i, string &Word);
 	
 	vector<Word> breakDown(string txt);
 	void input_stop_words(string path);
 
-	void delPointers();
+	//void delPointers();
 
 	//for debug
 	void display();

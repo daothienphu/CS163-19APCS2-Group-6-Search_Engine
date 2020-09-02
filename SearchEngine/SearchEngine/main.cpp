@@ -13,8 +13,10 @@ int main() {
 
 	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
+    se.input_stop_words("stopWords.txt");
 	se.input();
-	se.input_stop_words("stopWords.txt");
+
+	cout << TrieNode::numTrieNode << endl;
 	
 	string key;
 

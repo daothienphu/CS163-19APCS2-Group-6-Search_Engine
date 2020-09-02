@@ -43,8 +43,8 @@ vector<string> split(string queries) {
 }
 string toLower(string str) {
 	for (int i = 0; i < str.length(); ++i)
-		if (str[i] < 97)
-			str[i] += 32;
+		if (str[i] >= 'A' && str[i] <= 'Z')
+			str[i] += 'a' - 'A';
 	return str;
 }
 string getValidWord(string wrd) {
@@ -110,40 +110,44 @@ void WriteInColor(int color, string text) {
 
 #pragma region Trie implementation
 
-void Trie::input(ifstream& in) {
+int TrieNode::numTrieNode = 0;
+
+void Trie::input(ifstream& in, int file) {
     string str;
 	do {
-		in >> str; //cout << str << " ";
-		if(str.size()) insert(str);
+		in >> str; //cout << file << " " << str << endl;
+		if(str.size()) insert(str, file);
 	} while (in.good()); //cout << endl;
 }
-void Trie::insert(string Word) {
-	if (!root)
-		root = new TrieNode;
+void Trie::insert(string &Word, int file) {
+	if (!root) root = new TrieNode;
 	TrieNode* tmp = root;
-	Word = getValidTxt(Word);
+	Word = getValidTxt(Word); //cout << file << " " << Word << endl;
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[Word[i] - subtrahend])
 			tmp->p[Word[i] - subtrahend] = new TrieNode;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
-	tmp->end = true;
+
+	if (tmp->stopWord) return;
+	if (file == -1)
+	    tmp->stopWord = true;
+	else if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
+	    tmp->fileRoot = new FileNode {file, tmp->fileRoot};
 }
-bool Trie::search(string Word) {
-	if (!root)
-		return 0;
+void Trie::search(string &Word, int ans[], int &count) {
+	if (!root) return;
 	TrieNode* tmp = root;
 	Word = getValidTxt(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
-		if (!tmp->p[Word[i] - subtrahend])
-			return 0;
+		if (!tmp->p[Word[i] - subtrahend]) return;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
-	if (tmp->end)
-		return 1;
-	return 0;
+
+	if (tmp->stopWord) return;
+	for (FileNode *p = tmp->fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
 }
 
 void Trie::delPointers(TrieNode* root) {
@@ -152,13 +156,21 @@ void Trie::delPointers(TrieNode* root) {
 		if (root->p[i])
 			delPointers(root->p[i]);
 	}
+
+	FileNode *tmp = root->fileRoot;
+	while (root->fileRoot) {
+	    tmp = root->fileRoot;
+	    root->fileRoot = root->fileRoot->Next;
+	    delete tmp;
+	}
+
 	delete root;
 }
 
 //for debug
 void Trie::displayWords(TrieNode* root, string Word) {
 	if (!root) return;
-	if (root->end) {
+	if (!root->stopWord && root->fileRoot != nullptr) {
 		cout << Word << " ";
 		return;
 	}
@@ -184,13 +196,16 @@ void SearchEngine::loadDataList(ifstream &in) {
         if (filename.size()) dataList.push_back(filename);
 
     searchEngineNumOfDataFiles = dataList.size();
-    data = new Trie* [searchEngineNumOfDataFiles] {0};
+    //data = new Trie* [searchEngineNumOfDataFiles] {0};
 
     cout << "Data list loaded in " << close() << " second(s).\n";
 }
 
 void SearchEngine::input() {
     int progress = 0, p;
+    root = new Trie;
+
+    for (int i = 0; i<stop_words.size(); i++) root->insert(stop_words[i], -1);
 
 	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
 	    p = trunc((double) 100 * i / searchEngineNumOfDataFiles);
@@ -198,28 +213,31 @@ void SearchEngine::input() {
 
 		string fileName = "Data/" + dataList[i];
 		ifstream dataIn{ fileName };
-		if (!data[i])
-			data[i] = new Trie;
-		data[i]->input(dataIn);
+		root->input(dataIn, i);
 	}
 
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
-void SearchEngine::search(string Word) {
-	int count = 0;
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-		if (data[i]->search(Word)) {
-			writeText(i, Word);
-			count++;
-		}
-		if (count == 5) break;
-	}
+void SearchEngine::search(string &Word) {
+	int count = 0, ans[5];
+
+//	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
+//		if (data[i]->search(Word)) {
+//			writeText(i, Word);
+//			count++;
+//		}
+//		if (count == 5) break;
+//	}
+
+    root->search(Word, ans, count);
+    for (int i = 0; i<count; i++) writeText(ans[i], Word);
+
 	if (!count)
-	    cout << "No matches found." << endl << endl;
+	    cout << "No matches found in " << close() << " second(s).\n\n";
 	else
 	    cout << count << " matches found in " << close() << " second(s).\n\n";
 }
-void SearchEngine::writeText(int i, string Word) {
+void SearchEngine::writeText(int i, string &Word) {
 	string fileName = "Data/" + dataList[i];
 	ifstream dataIn{ fileName };
 	string msg = "Found match(es) from " + fileName;
@@ -290,22 +308,19 @@ void SearchEngine::input_stop_words(string path) {
 			tmp = "";
 		}
 	}
-	cout << "Finish reading stop words with " << stop_words.size() << endl;
+	cout << "Finish reading stop words with " << stop_words.size() << " in " << close() << " second(s).\n";
 }
 
-void SearchEngine::delPointers() {
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-		if (data[i])
-			data[i]->delPointers(data[i]->root);
-	}
-	//delete [] data;
-}
+//void SearchEngine::delPointers() {
+//	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
+//		if (data[i])
+//			data[i]->delPointers(data[i]->root);
+//	}
+//	//delete [] data;
+//}
 
 //for debug
 void SearchEngine::display() {
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-		data[i]->display();
-		cout << endl << endl;
-	}
+	root->display();
 }
 #pragma endregion
