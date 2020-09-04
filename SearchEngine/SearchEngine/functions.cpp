@@ -2,7 +2,6 @@
 #include "vector"
 
 #pragma region Time Measurement
-
 clock_t ___start_time = clock();
 
 void start() {
@@ -12,12 +11,12 @@ void start() {
 double close() {
     return double(clock()-___start_time) / CLOCKS_PER_SEC;
 }
-
 #pragma endregion
 
 #pragma region Utilities
 
 vector<string> stop_words;
+
 string toString(int i) {
 	string str;
 	if (!i)
@@ -57,18 +56,11 @@ string getValidWord(string wrd) {
 	}
 	return wrd;
 }
-string getValidTxt(string str) {
+string getValidText(string str) {
 	str = getValidWord(str);
 	str = toLower(str);
 	return str;
 }
-//string getFileName(int i) {
-//	string fileName = "Data/dataIn";
-//	for (int j = 0; j < floor(log10(searchEngineNumOfDataFiles)) - floor(log10(i + 1)); ++j)
-//		fileName += "0";
-//	fileName += toString(i + 1) + ".txt";
-//	return fileName;
-//}
 
 string getPrefix(string txt) {
 	string pre;
@@ -97,13 +89,6 @@ string getSuffix(string txt) {
 	return suf;
 }
 void WriteInColor(int color, string text) {
-	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
-	int originalColor = cbInfo.wAttributes;
-	SetConsoleTextAttribute(hConsole, color);
-	cout << text;
-	SetConsoleTextAttribute(hConsole, originalColor);*/
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
 #pragma endregion
@@ -122,7 +107,7 @@ void Trie::input(ifstream& in, int file) {
 void Trie::insert(string &Word, int file) {
 	if (!root) root = new TrieNode;
 	TrieNode* tmp = root;
-	Word = getValidTxt(Word); //cout << file << " " << Word << endl;
+	Word = getValidText(Word); //cout << file << " " << Word << endl;
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[Word[i] - subtrahend])
@@ -139,7 +124,7 @@ void Trie::insert(string &Word, int file) {
 void Trie::search(string &Word, int ans[], int &count) {
 	if (!root) return;
 	TrieNode* tmp = root;
-	Word = getValidTxt(Word);
+	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[Word[i] - subtrahend]) return;
@@ -192,11 +177,10 @@ void Trie::display() {
 
 void SearchEngine::loadDataList(ifstream &in) {
     string filename;
-    while (in >> filename)
-        if (filename.size()) dataList.push_back(filename);
+	while (in >> filename)
+		if (filename.size()) dataList.push_back(filename);
 
     searchEngineNumOfDataFiles = dataList.size();
-    //data = new Trie* [searchEngineNumOfDataFiles] {0};
 
     cout << "Data list loaded in " << close() << " second(s).\n";
 }
@@ -248,7 +232,7 @@ void SearchEngine::writeText(int i, string &Word) {
 		dataIn >> txt;
 		string prefix = getPrefix(txt);
 		string suffix = getSuffix(txt);
-		if (getValidTxt(txt) == getValidTxt(Word)) {
+		if (getValidText(txt) == getValidText(Word)) {
 			cout << prefix;
 			WriteInColor(blueWithBG, getValidWord(txt));
 			cout << suffix;
@@ -308,7 +292,7 @@ void SearchEngine::input_stop_words(string path) {
 			tmp = "";
 		}
 	}
-	cout << "Finish reading stop words with " << stop_words.size() << " in " << close() << " second(s).\n";
+	cout << "Finish reading stop words with " << stop_words.size() << " stop words in " << close() << " second(s).\n";
 }
 
 //void SearchEngine::delPointers() {

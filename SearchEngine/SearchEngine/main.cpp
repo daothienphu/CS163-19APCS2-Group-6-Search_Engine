@@ -7,13 +7,13 @@ int main() {
     SearchEngine se;
 
     start();
-	in.open("Data/___index.txt");
+	in.open("../SearchEngine/Data/___index.txt");
 	se.loadDataList(in);
 	in.close();
 
 	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
-    se.input_stop_words("stopWords.txt");
+    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
 	se.input();
 
 	cout << TrieNode::numTrieNode << endl;

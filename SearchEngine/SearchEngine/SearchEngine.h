@@ -2,13 +2,14 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <ctime>
 #include <vector>
 
 using namespace std;
 
 #define cyan 36
 #define blueWithBG 44
-#define trieCharSize 36 //a->z, 0->9, *#$, 1st
+#define trieCharSize 36 //a->z, 0->9, *#$, " "
 
 void start();
 double close();
