@@ -1,20 +1,38 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-//#include <windows.h>
+#include <cmath>
+#include <ctime>
 #include <vector>
+#include <string>
 
 using namespace std;
 
 #define cyan 36
 #define blueWithBG 44
-#define trieCharSize 36 //a->z, 0->9, *#$, 1st
-#define searchEngineNumOfDataFiles 10
+#define trieCharSize 36 //a->z, 0->9, *#$, " "
+
+void start();
+double close();
+
+struct FileNode {
+    int file;
+    FileNode *Next;
+};
 
 struct TrieNode {
+    static int numTrieNode;
 	TrieNode* p[trieCharSize]{ 0 };
-	bool end = false;
+	bool stopWord = false;
+	FileNode *fileRoot = nullptr;
+
+	TrieNode() {
+	    stopWord = false;
+	    fileRoot = nullptr;
+	    numTrieNode++;
+	}
 };
+
 struct Word {
 	string word;
 	int v1 = -1, v2 = -1;
@@ -32,30 +50,32 @@ struct Word {
 	5 - $..$ Range price
 	*/
 };
+
 struct Trie {
 	TrieNode* root = nullptr;
-	void input(ifstream& in);
-	void insert(string Word);
-	bool search(string Word);
-
-	void delPointers(TrieNode* root);
-
-	//for debug
-	void display();
-	void displayWords(TrieNode* root, string Word);
+	void input(ifstream& in, int file);
+	void insert(string &Word, int file); //file == -1 if Word is stopword
+    void search(string &Word, int ans[], int &count);
+	FileNode* searchFilesToScore(string& Word);
 };
 struct SearchEngine {
-	Trie* data[searchEngineNumOfDataFiles]{ 0 };
+    int searchEngineNumOfDataFiles;
+    vector<string> dataList;
+    Trie *root = nullptr;
 
-	void input(ifstream& in);
-	void search(string Word);
-	void writeText(int i, string Word);
-	
-	vector<Word> breakDown(string txt);
+	void loadDataList(ifstream &in);
 	void input_stop_words(string path);
+	void input();
 
-	void delPointers();
+	vector<Word> breakDown(string txt);
 
-	//for debug
-	void display();
+	void search(string &Word, int*& score);
+
+	void addScore(string query, int*& score);
+	void operator3(string query, int*& score);
+	void operator5(string query, int*& score);
+
+	void rankResult(int ans[], int &count, int*& score);
+
+	void writeText(int i, vector<string>& queries);
 };

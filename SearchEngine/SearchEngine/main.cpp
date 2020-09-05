@@ -2,11 +2,25 @@
 #include "iostream"
 #include "string"
 
+int* score = new int[11268]{ 0 };
+
 int main() {
-	ifstream in{ "../Search_Engine/dataList.txt" };
-	SearchEngine se;
-	se.input(in);
-	se.input_stop_words("../Search_Engine/stopWords.txt");
+	ifstream in;
+    SearchEngine se;
+
+	
+
+    start();
+	in.open("../SearchEngine/Data/___index.txt");
+	se.loadDataList(in);
+	in.close();
+
+	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
+
+    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
+	se.input();
+
+	cout << TrieNode::numTrieNode << endl;
 	
 	string key;
 
@@ -15,11 +29,13 @@ int main() {
 		getline(cin, key);
 		if (key == "exit")
 			break;
-		//system("cls");
-		cout << key << endl;
-		vector<Word> word = se.breakDown(key);
-		
-		//se.search(key);
+        start();
+		se.search(key, score);
+
+//		cout << key << endl;
+//		vector<Word> word = se.breakDown(key);
+//
+//		//se.search(key);
 	}
 	return 0;
 }
