@@ -1,11 +1,18 @@
 To-dos:  
 (important)  
-Fix problem with special characters.  
-Add support for search operator.  
-Add support for history and suggestion.  
-Remove English stopwords when they appear in queries.  
-Add ranking system for output results.  
-Add more data files with more content.  
+search operators:  
+1:  
+2:  
+3: done  
+4:  
+5: done  
+6:  
+7:  
+8:  
+9:  
+10:  
+11:  
+12:   
   
 (optional)  
 Implement a better Trie data structure, currently it's pretty basic.  
