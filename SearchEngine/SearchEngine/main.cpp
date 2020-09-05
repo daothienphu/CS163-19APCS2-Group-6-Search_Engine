@@ -2,9 +2,13 @@
 #include "iostream"
 #include "string"
 
+int* score = new int[11268]{ 0 };
+
 int main() {
 	ifstream in;
     SearchEngine se;
+
+	
 
     start();
 	in.open("../SearchEngine/Data/___index.txt");
@@ -26,7 +30,8 @@ int main() {
 		if (key == "exit")
 			break;
         start();
-		se.search(key);
+		se.search(key, score);
+
 //		cout << key << endl;
 //		vector<Word> word = se.breakDown(key);
 //

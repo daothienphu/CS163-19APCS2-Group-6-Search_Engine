@@ -94,7 +94,6 @@ void WriteInColor(int color, string text) {
 #pragma endregion
 
 #pragma region Trie implementation
-
 int TrieNode::numTrieNode = 0;
 
 void Trie::input(ifstream& in, int file) {
@@ -135,56 +134,50 @@ void Trie::search(string &Word, int ans[], int &count) {
 	for (FileNode *p = tmp->fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
 }
 
-void Trie::delPointers(TrieNode* root) {
-	if (!root) return;
-	for (int i = 0; i < trieCharSize; ++i) {
-		if (root->p[i])
-			delPointers(root->p[i]);
+//basically search, but returns FileNode =)))
+FileNode* Trie::searchFilesToScore(string& Word) {
+	if (!root) return nullptr;
+	TrieNode* tmp = root;
+	Word = getValidText(Word);
+	for (int i = 0; i < Word.length(); ++i) {
+		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[Word[i] - subtrahend]) return nullptr;
+		tmp = tmp->p[Word[i] - subtrahend];
 	}
 
-	FileNode *tmp = root->fileRoot;
-	while (root->fileRoot) {
-	    tmp = root->fileRoot;
-	    root->fileRoot = root->fileRoot->Next;
-	    delete tmp;
-	}
-
-	delete root;
+	if (tmp->stopWord) return nullptr;
+	return tmp->fileRoot;
 }
 
-//for debug
-void Trie::displayWords(TrieNode* root, string Word) {
-	if (!root) return;
-	if (!root->stopWord && root->fileRoot != nullptr) {
-		cout << Word << " ";
-		return;
-	}
-	for (int i = 0; i < 36; ++i)
-		if (root->p[i]) {
-			if (i < 26)
-				Word += i + 'a';
-			else Word += i - 26 + '0';
-			displayWords(root->p[i], Word);
-			Word.erase(Word.length() - 1);
-		}
-}
-void Trie::display() {
-	displayWords(root, "");
-}
 #pragma endregion
 
 #pragma region Search Engine Algorithms
-
 void SearchEngine::loadDataList(ifstream &in) {
     string filename;
-	while (in >> filename)
+	while (getline(in, filename)) //changed this from in >> filename
 		if (filename.size()) dataList.push_back(filename);
 
     searchEngineNumOfDataFiles = dataList.size();
 
     cout << "Data list loaded in " << close() << " second(s).\n";
 }
-
+void SearchEngine::input_stop_words(string path) {
+	ifstream input;
+	input.open(path);
+	string tmp;
+	if (!input.is_open()) {
+		cout << "Cannot read stop words" << endl;
+		return;
+	}
+	while (!input.eof()) {
+		input >> tmp;
+		{
+			stop_words.push_back(tmp);
+			tmp = "";
+		}
+	}
+	cout << "Finish reading stop words with " << stop_words.size() << " stop words in " << close() << " second(s).\n";
+}
 void SearchEngine::input() {
     int progress = 0, p;
     root = new Trie;
@@ -202,46 +195,7 @@ void SearchEngine::input() {
 
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
-void SearchEngine::search(string &Word) {
-	int count = 0, ans[5];
 
-//	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-//		if (data[i]->search(Word)) {
-//			writeText(i, Word);
-//			count++;
-//		}
-//		if (count == 5) break;
-//	}
-
-    root->search(Word, ans, count);
-    for (int i = 0; i<count; i++) writeText(ans[i], Word);
-
-	if (!count)
-	    cout << "No matches found in " << close() << " second(s).\n\n";
-	else
-	    cout << count << " matches found in " << close() << " second(s).\n\n";
-}
-void SearchEngine::writeText(int i, string &Word) {
-	string fileName = "Data/" + dataList[i];
-	ifstream dataIn{ fileName };
-	string msg = "Found match(es) from " + fileName;
-	WriteInColor(cyan, msg);
-	cout << endl;
-	string txt;
-	while (!dataIn.eof()) {
-		dataIn >> txt;
-		string prefix = getPrefix(txt);
-		string suffix = getSuffix(txt);
-		if (getValidText(txt) == getValidText(Word)) {
-			cout << prefix;
-			WriteInColor(blueWithBG, getValidWord(txt));
-			cout << suffix;
-		}
-		else cout << txt;
-		cout << " ";
-	}
-	cout << endl << endl;
-}
 void executeWord(Word& word) {
 	switch (word.word[0]) {
 	case '#':
@@ -261,7 +215,7 @@ vector<Word> SearchEngine::breakDown(string txt) {
 		executeWord(word);
 		w.push_back(word);
 		if (false) continue;
-		cout << "Word ["<<i<<"] :";
+		cout << "Word [" << i << "] :";
 		switch (word.function) {
 		case 0:
 			cout << " (N) ";
@@ -273,38 +227,122 @@ vector<Word> SearchEngine::breakDown(string txt) {
 			cout << " (#) ";
 			break;
 		}
-		cout << word.word<<endl;
+		cout << word.word << endl;
 	}
 	return w;
 }
-void SearchEngine::input_stop_words(string path) {
-	ifstream input;
-	input.open(path);
-	string tmp;
-	if (!input.is_open()) {
-		cout << "Cannot read stop words"<<endl;
-		return;
+
+
+void SearchEngine::search(string &Word, int*& score) {
+	int count = 0, ans[5];
+//
+//    root->search(Word, ans, count);
+//    for (int i = 0; i<count; i++) writeText(ans[i], Word);
+
+	for (int i = 0; i < searchEngineNumOfDataFiles; ++i)
+		score[i] = 0;
+
+	vector<string> splittedQuery = split(Word);
+	for (int i = 0; i < splittedQuery.size(); i++) {
+		if (splittedQuery[i][0] == '-')
+			operator3(splittedQuery[i].substr(1 , splittedQuery[i].length() - 1), score);
+		else if (splittedQuery[i][0] == '+')
+			operator5(splittedQuery[i].substr(1, splittedQuery[i].length() - 1), score);
+		else
+			addScore(splittedQuery[i], score);
 	}
-	while (!input.eof()) {
-		input >> tmp;
-		{
-			stop_words.push_back(tmp);
-			tmp = "";
+
+	rankResult(ans, count, score);
+
+	vector<string> queryToHighlight; //will change later
+	for (int i = 0; i < splittedQuery.size(); ++i)
+		if (splittedQuery[i][0] != '-')
+			queryToHighlight.push_back(splittedQuery[i]);
+	
+	for (int i = 0; i < count; ++i)
+		writeText(ans[i], queryToHighlight);
+
+	if (!count)
+	    cout << "No matches found in " << close() << " second(s).\n\n";
+	else
+	    cout << count << " matches found in " << close() << " second(s).\n\n";
+}
+//used for general case
+void SearchEngine::addScore(string query, int*& score) {
+	FileNode* files;
+	ifstream fileIn;
+	files = root->searchFilesToScore(query);
+	for (files; files != nullptr; files = files->Next) {
+		fileIn.open("../SearchEngine/Data/" + dataList[files->file]);
+		string word = "";
+		if (fileIn.is_open()) {
+			while (!fileIn.eof()) {
+				fileIn >> word;
+				if (getValidText(word) == getValidText(query) && score[files->file] != -1)
+					score[files->file]++;
+			}
 		}
+		fileIn.close();
 	}
-	cout << "Finish reading stop words with " << stop_words.size() << " stop words in " << close() << " second(s).\n";
+};
+//only used for the word behind "+" operator
+void SearchEngine::operator5(string query, int*& score) {
+	FileNode* files;
+	files = root->searchFilesToScore(query);
+	for (files; files != nullptr; files = files->Next)
+		score[files->file] -= 10000;
+	for (int i = 0; i < searchEngineNumOfDataFiles; ++i)
+		if (score[i] < 5000) score[i] += 10000;
+		else score[i] = -1;
+}
+//only used for the word behind "-" operator
+void SearchEngine::operator3(string query, int*& score) {
+	FileNode* files;
+	files = root->searchFilesToScore(query);
+	for (files; files != nullptr; files = files->Next)
+		score[files->file] = -1;
 }
 
-//void SearchEngine::delPointers() {
-//	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
-//		if (data[i])
-//			data[i]->delPointers(data[i]->root);
-//	}
-//	//delete [] data;
-//}
 
-//for debug
-void SearchEngine::display() {
-	root->display();
+void SearchEngine::rankResult(int ans[], int &count, int*& score) {
+	count = 0;
+	int k = 0;
+	for (int i = 0; i < 5; ++i) {
+		int max = 0;
+		for (int j = 1; j < searchEngineNumOfDataFiles; ++j)
+			if (score[j] > score[max])
+				max = j;
+		if (score[max] <= 0) break;
+		count++;
+		ans[k++] = max;
+		score[max] = -1;
+	}
+}
+
+void SearchEngine::writeText(int i, vector<string>& queries) {
+	string fileName = "../SearchEngine/Data/" + dataList[i];
+	ifstream dataIn{ fileName };
+	string msg = "Found match(es) from " + fileName;
+	WriteInColor(cyan, msg);
+	cout << endl;
+	string txt;
+	while (!dataIn.eof()) {
+		dataIn >> txt;
+		string prefix = getPrefix(txt);
+		string suffix = getSuffix(txt);
+		bool isQueryWord = 0;
+		for (int i = 0; i < queries.size(); ++i) {
+			if (getValidText(txt) == getValidText(queries[i])) {
+				cout << prefix;
+				WriteInColor(blueWithBG, getValidWord(txt));
+				cout << suffix;
+				isQueryWord = 1;
+				break;
+			}
+		}
+		if (!isQueryWord) cout << txt;
+		cout << " ";
+	}
+	cout << endl << endl;
 }
 #pragma endregion

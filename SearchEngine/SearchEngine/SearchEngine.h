@@ -4,6 +4,7 @@
 #include <cmath>
 #include <ctime>
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -55,12 +56,7 @@ struct Trie {
 	void input(ifstream& in, int file);
 	void insert(string &Word, int file); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count);
-
-	void delPointers(TrieNode* root);
-
-	//for debug
-	void display();
-	void displayWords(TrieNode* root, string Word);
+	FileNode* searchFilesToScore(string& Word);
 };
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
@@ -68,16 +64,18 @@ struct SearchEngine {
     Trie *root = nullptr;
 
 	void loadDataList(ifstream &in);
-
-	void input();
-	void search(string &Word);
-	void writeText(int i, string &Word);
-	
-	vector<Word> breakDown(string txt);
 	void input_stop_words(string path);
+	void input();
 
-	//void delPointers();
+	vector<Word> breakDown(string txt);
 
-	//for debug
-	void display();
+	void search(string &Word, int*& score);
+
+	void addScore(string query, int*& score);
+	void operator3(string query, int*& score);
+	void operator5(string query, int*& score);
+
+	void rankResult(int ans[], int &count, int*& score);
+
+	void writeText(int i, vector<string>& queries);
 };
