@@ -10,7 +10,10 @@ using namespace std;
 
 #define cyan 36
 #define blueWithBG 44
-#define trieCharSize 36 //a->z, 0->9, *#$, " "
+#define trieCharSize 39 //a->z, 0->9, *#$, 1st
+
+#define STOPWORD -1
+#define INTITLE true
 
 void start();
 double close();
@@ -23,8 +26,10 @@ struct FileNode {
 struct TrieNode {
     static int numTrieNode;
 	TrieNode* p[trieCharSize]{ 0 };
+
 	bool stopWord = false;
 	FileNode *fileRoot = nullptr;
+	FileNode *inTitleRoot = nullptr;
 
 	TrieNode() {
 	    stopWord = false;
@@ -53,10 +58,19 @@ struct Word {
 
 struct Trie {
 	TrieNode* root = nullptr;
-	void input(ifstream& in, int file);
-	void insert(string &Word, int file); //file == -1 if Word is stopword
-    void search(string &Word, int ans[], int &count);
+	int map[255];
+
+	Trie();
+
+	void input(ifstream& in, int file, bool inTitle = false);
+	void insert(string &Word, int file, bool inTitle = false); //file == -1 if Word is stopword
+    void search(string &Word, int ans[], int &count, bool inTitle = false);
 	FileNode* searchFilesToScore(string& Word);
+	void delPointers(TrieNode* root);
+
+	//for debug
+	void display();
+	void displayWords(TrieNode* root, string Word);
 };
 struct SearchEngine {
     int searchEngineNumOfDataFiles;

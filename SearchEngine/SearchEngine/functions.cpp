@@ -49,8 +49,10 @@ string toLower(string str) {
 string getValidWord(string wrd) {
 	int i = 0;
 	while (i < wrd.length()) {
-		if ((wrd[i] >= '0' && wrd[i] <= '9') || (wrd[i] >= 'a' && wrd[i] <= 'z') ||
-			(wrd[i] >= 'A' && wrd[i] <= 'Z'))
+		if ((wrd[i] >= '0' && wrd[i] <= '9') ||
+		    (wrd[i] >= 'a' && wrd[i] <= 'z') ||
+			(wrd[i] >= 'A' && wrd[i] <= 'Z') ||
+            (wrd[i] == '#' || wrd[i] == '$' || wrd[i] == '*'))
 			i++;
 		else wrd.erase(i, 1);
 	}
@@ -96,42 +98,56 @@ void WriteInColor(int color, string text) {
 #pragma region Trie implementation
 int TrieNode::numTrieNode = 0;
 
-void Trie::input(ifstream& in, int file) {
+Trie::Trie() {
+    root = nullptr;
+    for (int i = 0; i<26; i++) map['a' + i] = map['A' + i] = i;
+    for (int i = 0; i<10; i++) map['0' + i] = 26 + i;
+    map['*'] = 36;
+    map['#'] = 37;
+    map['$'] = 38;
+}
+
+void Trie::input(ifstream& in, int file, bool inTitle) {
     string str;
 	do {
 		in >> str; //cout << file << " " << str << endl;
-		if(str.size()) insert(str, file);
+		if(str.size()) insert(str, file, inTitle);
 	} while (in.good()); //cout << endl;
 }
-void Trie::insert(string &Word, int file) {
+void Trie::insert(string &Word, int file, bool inTitle) {
 	if (!root) root = new TrieNode;
 	TrieNode* tmp = root;
 	Word = getValidText(Word); //cout << file << " " << Word << endl;
 	for (int i = 0; i < Word.length(); ++i) {
-		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
-		if (!tmp->p[Word[i] - subtrahend])
-			tmp->p[Word[i] - subtrahend] = new TrieNode;
-		tmp = tmp->p[Word[i] - subtrahend];
+		//int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[map[Word[i]]])
+			tmp->p[map[Word[i]]] = new TrieNode;
+		tmp = tmp->p[map[Word[i]]];
 	}
 
 	if (tmp->stopWord) return;
 	if (file == -1)
 	    tmp->stopWord = true;
-	else if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-	    tmp->fileRoot = new FileNode {file, tmp->fileRoot};
+	else {
+	    if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
+            tmp->fileRoot = new FileNode {file, tmp->fileRoot};
+	    if (inTitle && (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file))
+	        tmp->inTitleRoot = new FileNode {file, tmp->inTitleRoot};
+	}
 }
-void Trie::search(string &Word, int ans[], int &count) {
+void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	if (!root) return;
 	TrieNode* tmp = root;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
-		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
-		if (!tmp->p[Word[i] - subtrahend]) return;
-		tmp = tmp->p[Word[i] - subtrahend];
+		//int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[map[Word[i]]]) return;
+		tmp = tmp->p[map[Word[i]]];
 	}
 
 	if (tmp->stopWord) return;
-	for (FileNode *p = tmp->fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
+	FileNode *fileRoot = (inTitle ? tmp->inTitleRoot : tmp->fileRoot);
+	for (FileNode *p = fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
 }
 
 //basically search, but returns FileNode =)))
@@ -182,7 +198,7 @@ void SearchEngine::input() {
     int progress = 0, p;
     root = new Trie;
 
-    for (int i = 0; i<stop_words.size(); i++) root->insert(stop_words[i], -1);
+    for (int i = 0; i<stop_words.size(); i++) root->insert(stop_words[i], STOPWORD);
 
 	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
 	    p = trunc((double) 100 * i / searchEngineNumOfDataFiles);
