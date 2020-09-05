@@ -104,6 +104,7 @@ void Trie::insert(string Word) {
 	if (!root)
 		root = new TrieNode;
 	TrieNode* tmp = root;
+	string tempWord = Word;
 	Word = getValidTxt(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
@@ -111,6 +112,7 @@ void Trie::insert(string Word) {
 			tmp->p[Word[i] - subtrahend] = new TrieNode;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
+	tmp->s = tempWord;
 	tmp->end = true;
 }
 bool Trie::search(string Word) {
@@ -137,7 +139,28 @@ void Trie::delPointers(TrieNode* root) {
 	}
 	delete root;
 }
-
+TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
+	if (!root || root->end) return root;
+	if (Word.length() == 0) return root;	
+	if (root->p[(int)Word[0] - 'a']) {
+		char tmp = Word[0];
+		Word = Word.erase(0,1);
+		return Trie::getSuggestion(root->p[(int)tmp-'a'], Word);
+	}
+	return nullptr;
+}
+void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
+	if (!root) return;
+	if (root->end) {
+		resultSet.push_back(root->s);
+		return;
+	}
+	for (int i = 0; i < 36; ++i)
+		if (root->p[i]) getResult(root->p[i], resultSet);
+}
+TrieNode* Trie::searchSuggestion(string Word) {
+	return getSuggestion(root, getValidTxt(Word));
+}
 //for debug
 void Trie::displayWords(TrieNode* root, string Word) {
 	if (!root) return;

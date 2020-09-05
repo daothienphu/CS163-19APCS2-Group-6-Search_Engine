@@ -14,6 +14,7 @@ using namespace std;
 struct TrieNode {
 	TrieNode* p[trieCharSize]{ 0 };
 	bool end = false;
+	string s;
 };
 struct Word {
 	string word;
@@ -40,6 +41,9 @@ struct Trie {
 
 	void delPointers(TrieNode* root);
 
+	TrieNode* getSuggestion(TrieNode* root, string Word);
+	TrieNode* searchSuggestion(string Word); 
+	void getResult(TrieNode* root, vector<string>& resultSet);
 	//for debug
 	void display();
 	void displayWords(TrieNode* root, string Word);
