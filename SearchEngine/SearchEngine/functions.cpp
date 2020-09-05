@@ -163,8 +163,10 @@ TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
 	}
 	return nullptr;
 }
+#define MAX_RESULT 3
 void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
 	if (!root) return;
+	if (resultSet.size() >= MAX_RESULT) return;
 	if (root->end) {
 		resultSet.push_back(root->s);
 		return;

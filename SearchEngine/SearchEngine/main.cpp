@@ -3,6 +3,10 @@
 #include "string"
 #include <conio.h>
 
+#define HISTORY_PATH "../SearchEngine/Data/history.txt"
+#define STOPWORD_PATH "../SearchEngine/Data/stopWords.txt"
+#define DATA_PATH "../SearchEngine/Data/dataList.txt"
+
 void deleteChar(int k) {
 	for(int i = 0; i < k; i++)cout << '\b' << (char)32 << '\b';
 }
@@ -17,7 +21,7 @@ void WriteColor(int color, string text) {
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
 void loadHistory(Trie& history){
-	ifstream input{ "../SearchEngine/Data/history.txt" };
+	ifstream input{ HISTORY_PATH };
 	string tmp; int k = 0;
 	if (!input.is_open()) {
 		cout << "Cannot read stop words" << endl;
@@ -34,14 +38,14 @@ void loadHistory(Trie& history){
 void saveHistory(Trie& history, string queries) {
 	history.insert_sl(queries);
 	ofstream out;
-	out.open("../SearchEngine/Data/history.txt", ios::app);
+	out.open(HISTORY_PATH, ios::app);
 	out << queries << endl;
 }
 int main() {
-	ifstream in{ "../SearchEngine/Data/dataList.txt" };
+	ifstream in{ DATA_PATH };
 	SearchEngine se;
 	se.input(in);
-	se.input_stop_words("../SearchEngine/Data/stopWords.txt");
+	se.input_stop_words(STOPWORD_PATH);
 	
 	string key = "";
 	
@@ -54,6 +58,7 @@ int main() {
 		int t = 0;
 		bool accept = false;
 		do {
+			//Read input
 			c = _getch();
 			system("cls");
 			vector<string> set;
@@ -67,16 +72,18 @@ int main() {
 			else if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
 				(c >= 'A' && c <= 'Z') || c == ' ') key += c;
 			if (t < 0) t = 0;
-			if (key.length() > 2) {
-				//Average length to do search;
-				TrieNode* sug = history.searchSuggestion(key);
-				history.getResult(sug, set);
-				if (t >= set.size()) t = 0;
-			}
+			//Search
+			TrieNode* sug = history.searchSuggestion(key);
+			history.getResult(sug, set);
+			if (t >= set.size()) t = 0;
+			
 			if (accept && t < set.size()) {
+				//Paste history into search key
 				key = set[t];
 				accept = false;
 			}
+			
+			//Print out the search
 			cout <<" >> "<< key << endl;
 			for (int i = 0; i < set.size(); i++) {
 				cout << "  * ";
