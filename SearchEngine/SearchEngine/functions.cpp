@@ -112,6 +112,20 @@ void Trie::insert(string Word) {
 			tmp->p[Word[i] - subtrahend] = new TrieNode;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
+	tmp->end = true;
+}
+void Trie::insert_sl(string Word) {
+	if (!root)
+		root = new TrieNode;
+	TrieNode* tmp = root;
+	string tempWord = Word;
+	Word = getValidTxt(Word);
+	for (int i = 0; i < Word.length(); ++i) {
+		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[Word[i] - subtrahend])
+			tmp->p[Word[i] - subtrahend] = new TrieNode;
+		tmp = tmp->p[Word[i] - subtrahend];
+	}
 	tmp->s = tempWord;
 	tmp->end = true;
 }
@@ -260,8 +274,7 @@ vector<Word> SearchEngine::breakDown(string txt) {
 	return w;
 }
 void SearchEngine::input_stop_words(string path) {
-	ifstream input;
-	input.open(path);
+	ifstream input{ path };
 	string tmp;
 	if (!input.is_open()) {
 		cout << "Cannot read stop words"<<endl;
@@ -274,7 +287,7 @@ void SearchEngine::input_stop_words(string path) {
 			tmp = "";
 		}
 	}
-	cout << "Finish reading stop words with " + stop_words.size();
+	cout << "[Debug] Finish reading stop words with " << stop_words.size() << endl;
 }
 
 void SearchEngine::delPointers() {

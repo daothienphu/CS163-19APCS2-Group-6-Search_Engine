@@ -16,15 +16,38 @@ void WriteColor(int color, string text) {
 	SetConsoleTextAttribute(hConsole, originalColor);*/
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
+void loadHistory(Trie& history){
+	ifstream input{ "../SearchEngine/Data/history.txt" };
+	string tmp; int k = 0;
+	if (!input.is_open()) {
+		cout << "Cannot read stop words" << endl;
+		return;
+	}
+	while (!input.eof()) {
+		getline(input, tmp);
+		if (tmp.length() < 1) break;
+		k++;
+		history.insert_sl(tmp);
+	}
+	cout << "[DEBUG] Loaded history " << k <<endl;
+}
+void saveHistory(Trie& history, string queries) {
+	history.insert_sl(queries);
+	ofstream out;
+	out.open("../SearchEngine/Data/history.txt", ios::app);
+	out << queries << endl;
+}
 int main() {
-	ifstream in{ "../Search_Engine/dataList.txt" };
+	ifstream in{ "../SearchEngine/Data/dataList.txt" };
 	SearchEngine se;
 	se.input(in);
-	se.input_stop_words("../Search_Engine/stopWords.txt");
+	se.input_stop_words("../SearchEngine/Data/stopWords.txt");
 	
 	string key = "";
 	
 	Trie history;
+	loadHistory(history);
+
 	cout << "What do you want to search? ('exit' to exit) " << endl;
 	while (1) {
 		char c;
@@ -64,10 +87,14 @@ int main() {
 		if (key == "exit")
 			break;
 		cout << key << endl;
+		saveHistory(history, key);
 		vector<Word> word = se.breakDown(key);
 
 		//Reset and start new search
-		//key = "";
+		cout << "Press any key to start new search";
+		key = "";
+		accept = false;
+		t = 0;
 	}
 	return 0;
 }

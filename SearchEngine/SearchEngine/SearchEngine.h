@@ -37,6 +37,7 @@ struct Trie {
 	TrieNode* root = nullptr;
 	void input(ifstream& in);
 	void insert(string Word);
+	void insert_sl(string Word);
 	bool search(string Word);
 
 	void delPointers(TrieNode* root);
