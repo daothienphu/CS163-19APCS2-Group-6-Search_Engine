@@ -8,19 +8,17 @@ int main() {
 	ifstream in;
     SearchEngine se;
 
-	
-
     start();
-	in.open("../SearchEngine/Data/___index.txt");
+    in.open(WORKPLACE + "___index.txt");
 	se.loadDataList(in);
 	in.close();
 
 	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
-    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
+    se.input_stop_words(WORKPLACE + "stopWords.txt");
 	se.input();
 
-	cout << TrieNode::numTrieNode << endl;
+	//cout << TrieNode::numTrieNode << endl;
 	
 	string key;
 

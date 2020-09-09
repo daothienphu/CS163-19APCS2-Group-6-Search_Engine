@@ -15,8 +15,6 @@ double close() {
 
 #pragma region Utilities
 
-vector<string> stop_words;
-
 string toString(int i) {
 	string str;
 	if (!i)
@@ -40,6 +38,14 @@ vector<string> split(string queries) {
 	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
 	return arr;
 }
+
+bool isValidChar(char &ch) {
+    return (ch >= '0' && ch <= '9') ||
+           (ch >= 'a' && ch <= 'z') ||
+           (ch >= 'A' && ch <= 'Z') ||
+           (ch == '#' || ch == '$' || ch == '*');
+}
+
 string toLower(string str) {
 	for (int i = 0; i < str.length(); ++i)
 		if (str[i] >= 'A' && str[i] <= 'Z')
@@ -49,10 +55,7 @@ string toLower(string str) {
 string getValidWord(string wrd) {
 	int i = 0;
 	while (i < wrd.length()) {
-		if ((wrd[i] >= '0' && wrd[i] <= '9') ||
-		    (wrd[i] >= 'a' && wrd[i] <= 'z') ||
-			(wrd[i] >= 'A' && wrd[i] <= 'Z') ||
-            (wrd[i] == '#' || wrd[i] == '$' || wrd[i] == '*'))
+		if (isValidChar(wrd[i]))
 			i++;
 		else wrd.erase(i, 1);
 	}
@@ -75,10 +78,10 @@ string getPrefix(string txt) {
 	}
 	return pre;
 }
-bool checkStopWord(string txt) {
-	for (int i = 0; i < stop_words.size(); i++) if (stop_words[i].compare(txt) == 0) return true;
-	return false;
-}
+//bool checkStopWord(string txt) {
+//	for (int i = 0; i < stop_words.size(); i++) if (stop_words[i].compare(txt) == 0) return true;
+//	return false;
+//}
 string getSuffix(string txt) {
 	string suf;
 	int i = txt.length() - 1;
@@ -98,24 +101,64 @@ void WriteInColor(int color, string text) {
 #pragma region Trie implementation
 int TrieNode::numTrieNode = 0;
 
-Trie::Trie() {
-    root = nullptr;
-    for (int i = 0; i<26; i++) map['a' + i] = map['A' + i] = i;
-    for (int i = 0; i<10; i++) map['0' + i] = 26 + i;
-    map['*'] = 36;
-    map['#'] = 37;
-    map['$'] = 38;
+void Trie::input(string &filename, int file) {
+    FILE *fin = fopen(filename.c_str(), "r");
+    if (fin == NULL) return;
+
+    char ch;
+    int pos = 0;
+    bool inTitle = true, inTitle_tmp = true;
+    TrieNode *tmp = root;
+
+    do {
+        ch = getc(fin);
+        if (ch == '.') inTitle_tmp = false;
+
+        if (ch == ' ' || ch == '\n' || ch == EOF) { //new word
+            if (tmp != root) { //check not consecutive space
+                if (!tmp->stopWord) {
+                    if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
+                        tmp->fileRoot = new FileNode {file, 0, nullptr, tmp->fileRoot};
+                    tmp->fileRoot->posRoot = new PosNode {pos, tmp->fileRoot->posRoot};
+                    tmp->fileRoot->num++;
+
+                    if (inTitle) {
+                        if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
+                            tmp->inTitleRoot = new FileNode {file, 0, nullptr, tmp->inTitleRoot};
+                        tmp->inTitleRoot->posRoot = new PosNode {pos, tmp->inTitleRoot->posRoot};
+                        tmp->inTitleRoot->num++;
+                    }
+                }
+
+                //preparing for new word
+                tmp = root;
+                pos++;
+                if (!inTitle_tmp) inTitle = false; //word right before '.' not put in the list inTitleRoot
+            }
+        } else if (!isValidChar(ch))
+            continue;
+        else { //valid character
+            if (!tmp->p[map[ch]]) tmp->p[map[ch]] = new TrieNode;
+            tmp = tmp->p[map[ch]];
+        }
+
+    } while (ch != EOF);
+
+    fclose(fin);
 }
 
 void Trie::input(ifstream& in, int file, bool inTitle) {
     string str;
-	do {
-		in >> str; //cout << file << " " << str << endl;
-		if(str.size()) insert(str, file, inTitle);
-	} while (in.good()); //cout << endl;
+    int cnt = 0;
+    do {
+        in >> str; //cout << file << " " << str << endl;
+        if(str.size()) insert(str, file, cnt++, inTitle);
+    } while (in.good()); //cout << endl;
 }
-void Trie::insert(string &Word, int file, bool inTitle) {
-	if (!root) root = new TrieNode;
+
+void Trie::insert(string &Word, int file, int pos, bool inTitle) {
+	//if (!root) root = new TrieNode;
+
 	TrieNode* tmp = root;
 	Word = getValidText(Word); //cout << file << " " << Word << endl;
 	for (int i = 0; i < Word.length(); ++i) {
@@ -130,9 +173,16 @@ void Trie::insert(string &Word, int file, bool inTitle) {
 	    tmp->stopWord = true;
 	else {
 	    if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-            tmp->fileRoot = new FileNode {file, tmp->fileRoot};
-	    if (inTitle && (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file))
-	        tmp->inTitleRoot = new FileNode {file, tmp->inTitleRoot};
+            tmp->fileRoot = new FileNode {file, 0, nullptr, tmp->fileRoot};
+	    tmp->fileRoot->posRoot = new PosNode {pos, tmp->fileRoot->posRoot};
+	    tmp->fileRoot->num++;
+
+	    if (inTitle) {
+            if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
+                tmp->inTitleRoot = new FileNode {file, 0, nullptr, tmp->inTitleRoot};
+            tmp->inTitleRoot->posRoot = new PosNode {pos, tmp->inTitleRoot->posRoot};
+            tmp->inTitleRoot->num++;
+	    }
 	}
 }
 void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
@@ -180,33 +230,35 @@ void SearchEngine::loadDataList(ifstream &in) {
 void SearchEngine::input_stop_words(string path) {
 	ifstream input;
 	input.open(path);
-	string tmp;
+
+	string stopWords;
+	int numStopWords = 0;
+
 	if (!input.is_open()) {
 		cout << "Cannot read stop words" << endl;
 		return;
 	}
+
 	while (!input.eof()) {
-		input >> tmp;
-		{
-			stop_words.push_back(tmp);
-			tmp = "";
-		}
+		input >> stopWords;
+        root->insert(stopWords, STOPWORD);
+        numStopWords++;
 	}
-	cout << "Finish reading stop words with " << stop_words.size() << " stop words in " << close() << " second(s).\n";
+
+	cout << "Finish reading stop words with " << numStopWords << " stop words in " << close() << " second(s).\n";
 }
 void SearchEngine::input() {
     int progress = 0, p;
-    root = new Trie;
+    string fileName;
 
-    for (int i = 0; i<stop_words.size(); i++) root->insert(stop_words[i], STOPWORD);
-
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
+    for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
 	    p = trunc((double) 100 * i / searchEngineNumOfDataFiles);
 	    if (p / 25 > progress) cout << 25 * (++progress) << "% files loaded in " << close() << " second(s).\n";
 
-		string fileName = "Data/" + dataList[i];
-		ifstream dataIn{ fileName };
-		root->input(dataIn, i);
+		fileName = WORKPLACE + dataList[i];
+		//ifstream dataIn{ fileName };
+		root->input(fileName, i);
+		//root->input(dataIn, i);
 	}
 
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
@@ -226,7 +278,7 @@ vector<Word> SearchEngine::breakDown(string txt) {
 	vector<Word> w;
 	vector<string> s = split(txt);
 	for (int i = 0; i < s.size(); i++) {
-		if (checkStopWord(s[i])) continue;
+		//if (checkStopWord(s[i])) continue;
 		Word word(s[i]);
 		executeWord(word);
 		w.push_back(word);
@@ -255,10 +307,11 @@ void SearchEngine::search(string &Word, int*& score) {
 //    root->search(Word, ans, count);
 //    for (int i = 0; i<count; i++) writeText(ans[i], Word);
 
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i)
-		score[i] = 0;
+	memset(score, 0, searchEngineNumOfDataFiles * sizeof(int));
 
 	vector<string> splittedQuery = split(Word);
+
+	//double time = close(), time1;
 	for (int i = 0; i < splittedQuery.size(); i++) {
 		if (splittedQuery[i][0] == '-')
 			operator3(splittedQuery[i].substr(1 , splittedQuery[i].length() - 1), score);
@@ -266,6 +319,10 @@ void SearchEngine::search(string &Word, int*& score) {
 			operator5(splittedQuery[i].substr(1, splittedQuery[i].length() - 1), score);
 		else
 			addScore(splittedQuery[i], score);
+
+		//time1 = close();
+		//cout << time1 - time << endl;
+		//time = time1;
 	}
 
 	rankResult(ans, count, score);
@@ -288,17 +345,20 @@ void SearchEngine::addScore(string query, int*& score) {
 	FileNode* files;
 	ifstream fileIn;
 	files = root->searchFilesToScore(query);
+	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-		fileIn.open("../SearchEngine/Data/" + dataList[files->file]);
-		string word = "";
-		if (fileIn.is_open()) {
-			while (!fileIn.eof()) {
-				fileIn >> word;
-				if (getValidText(word) == getValidText(query) && score[files->file] != -1)
-					score[files->file]++;
-			}
-		}
-		fileIn.close();
+//		fileIn.open(WORKPLACE + dataList[files->file]);
+//		string word = "";
+//		if (fileIn.is_open()) {
+//			while (!fileIn.eof()) {
+//				fileIn >> word;
+//				if (getValidText(word) == query && score[files->file] != -1)
+//					score[files->file]++;
+//			}
+//		}
+//		fileIn.close();
+
+        score[files->file] += files->num;
 	}
 };
 //only used for the word behind "+" operator
@@ -336,7 +396,8 @@ void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 }
 
 void SearchEngine::writeText(int i, vector<string>& queries) {
-	string fileName = "../SearchEngine/Data/" + dataList[i];
+	//string fileName = "../SearchEngine/Data/" + dataList[i];
+    string fileName = WORKPLACE + dataList[i];
 	ifstream dataIn{ fileName };
 	string msg = "Found match(es) from " + fileName;
 	WriteInColor(cyan, msg);

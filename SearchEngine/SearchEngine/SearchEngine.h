@@ -15,11 +15,20 @@ using namespace std;
 #define STOPWORD -1
 #define INTITLE true
 
+const string WORKPLACE = "../SearchEngine/Data/";
+//const string WORKPLACE = "/Users/ducanchu/Documents/Assignments/CS163/CS163-19APCS2-Group-6-SearchEngine/SearchEngine/SearchEngine/Data/";
+
 void start();
 double close();
 
+struct PosNode {
+    int pos;
+    PosNode *Next;
+};
+
 struct FileNode {
-    int file;
+    int file, num = 0;
+    PosNode *posRoot = nullptr;
     FileNode *Next;
 };
 
@@ -34,6 +43,7 @@ struct TrieNode {
 	TrieNode() {
 	    stopWord = false;
 	    fileRoot = nullptr;
+	    inTitleRoot = nullptr;
 	    numTrieNode++;
 	}
 };
@@ -60,10 +70,18 @@ struct Trie {
 	TrieNode* root = nullptr;
 	int map[255];
 
-	Trie();
+	Trie() {
+        root = new TrieNode;
+        for (int i = 0; i<26; i++) map['a' + i] = map['A' + i] = i;
+        for (int i = 0; i<10; i++) map['0' + i] = 26 + i;
+        map['*'] = 36;
+        map['#'] = 37;
+        map['$'] = 38;
+	}
 
-	void input(ifstream& in, int file, bool inTitle = false);
-	void insert(string &Word, int file, bool inTitle = false); //file == -1 if Word is stopword
+	void input(string &filename, int file);
+    void input(ifstream& in, int file, bool inTitle = false);
+	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
 	FileNode* searchFilesToScore(string& Word);
 	void delPointers(TrieNode* root);
@@ -75,7 +93,7 @@ struct Trie {
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
     vector<string> dataList;
-    Trie *root = nullptr;
+    Trie *root = new Trie;
 
 	void loadDataList(ifstream &in);
 	void input_stop_words(string path);
