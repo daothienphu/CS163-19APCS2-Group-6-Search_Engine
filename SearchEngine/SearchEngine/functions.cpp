@@ -138,6 +138,7 @@ void Trie::insert(string &Word, int file, bool inTitle) {
 void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	if (!root) return;
 	TrieNode* tmp = root;
+	string tempWord = Word;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		//int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
@@ -149,7 +150,21 @@ void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	FileNode *fileRoot = (inTitle ? tmp->inTitleRoot : tmp->fileRoot);
 	for (FileNode *p = fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
 }
-
+void Trie::insert_sl(string Word) {
+	if (!root)
+		root = new TrieNode;
+	TrieNode* tmp = root;
+	string tempWord = Word;
+	Word = getValidTxt(Word);
+	for (int i = 0; i < Word.length(); ++i) {
+		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[Word[i] - subtrahend])
+			tmp->p[Word[i] - subtrahend] = new TrieNode;
+		tmp = tmp->p[Word[i] - subtrahend];
+	}
+	tmp->s = tempWord;
+	tmp->end = true;
+}
 //basically search, but returns FileNode =)))
 FileNode* Trie::searchFilesToScore(string& Word) {
 	if (!root) return nullptr;
@@ -160,11 +175,34 @@ FileNode* Trie::searchFilesToScore(string& Word) {
 		if (!tmp->p[Word[i] - subtrahend]) return nullptr;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
-
 	if (tmp->stopWord) return nullptr;
 	return tmp->fileRoot;
 }
 
+TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
+	if (!root || root->end) return root;
+	if (Word.length() == 0) return root;	
+	if (root->p[(int)Word[0] - 'a']) {
+		char tmp = Word[0];
+		Word = Word.erase(0,1);
+		return Trie::getSuggestion(root->p[(int)tmp-'a'], Word);
+	}
+	return nullptr;
+}
+#define MAX_RESULT 3
+void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
+	if (!root) return;
+	if (resultSet.size() >= MAX_RESULT) return;
+	if (root->end) {
+		resultSet.push_back(root->s);
+		return;
+	}
+	for (int i = 0; i < 36; ++i)
+		if (root->p[i]) getResult(root->p[i], resultSet);
+}
+TrieNode* Trie::searchSuggestion(string Word) {
+	return getSuggestion(root, getValidTxt(Word));
+}
 #pragma endregion
 
 #pragma region Search Engine Algorithms
@@ -197,7 +235,6 @@ void SearchEngine::input_stop_words(string path) {
 void SearchEngine::input() {
     int progress = 0, p;
     root = new Trie;
-
     for (int i = 0; i<stop_words.size(); i++) root->insert(stop_words[i], STOPWORD);
 
 	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
@@ -208,7 +245,6 @@ void SearchEngine::input() {
 		ifstream dataIn{ fileName };
 		root->input(dataIn, i);
 	}
-
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
 

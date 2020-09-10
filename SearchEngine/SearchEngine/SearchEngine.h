@@ -36,6 +36,7 @@ struct TrieNode {
 	    fileRoot = nullptr;
 	    numTrieNode++;
 	}
+	string s;
 };
 
 struct Word {
@@ -58,7 +59,12 @@ struct Word {
 
 struct Trie {
 	TrieNode* root = nullptr;
+
 	int map[255];
+
+	void insert_sl(string Word);
+
+
 
 	Trie();
 
@@ -68,6 +74,9 @@ struct Trie {
 	FileNode* searchFilesToScore(string& Word);
 	void delPointers(TrieNode* root);
 
+	TrieNode* getSuggestion(TrieNode* root, string Word);
+	TrieNode* searchSuggestion(string Word); 
+	void getResult(TrieNode* root, vector<string>& resultSet);
 	//for debug
 	void display();
 	void displayWords(TrieNode* root, string Word);
