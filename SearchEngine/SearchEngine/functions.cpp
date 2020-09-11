@@ -37,7 +37,7 @@ vector<string> split(string queries) {
 			old_pos = i;
 		}
 	while (queries[old_pos] == ' ') old_pos++;
-	arr.push_back(queries.substr(old_pos, queries.length() - 1 - old_pos));
+	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
 	return arr;
 }
 string toLower(string str) {
@@ -163,7 +163,6 @@ void Trie::insert_sl(string Word) {
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
 	tmp->s = tempWord;
-	tmp->end = true;
 }
 //basically search, but returns FileNode =)))
 FileNode* Trie::searchFilesToScore(string& Word) {
@@ -180,7 +179,7 @@ FileNode* Trie::searchFilesToScore(string& Word) {
 }
 
 TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
-	if (!root || root->end) return root;
+	if (!root || root->s.length() > 0) return root;
 	if (Word.length() == 0) return root;	
 	if (root->p[(int)Word[0] - 'a']) {
 		char tmp = Word[0];
@@ -193,7 +192,7 @@ TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
 void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
 	if (!root) return;
 	if (resultSet.size() >= MAX_RESULT) return;
-	if (root->end) {
+	if (root->s.length() > 0) {
 		resultSet.push_back(root->s);
 		return;
 	}
@@ -248,42 +247,54 @@ void SearchEngine::input() {
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
 
-void executeWord(Word& word) {
-	switch (word.word[0]) {
-	case '#':
-		word.function = 2;
-		break;
+int getFlag(string Word) {
+	if (Word == "AND") return 0;
+	if (Word == "OR") return 1;
+	switch (Word[0]) {
 	case '$':
-		word.function = 1;
-		break;
+		return 2;
+	case '+':
+		return 3;
+	case '-':
+		return 4;
 	}
+	return -1;
 }
-vector<Word> SearchEngine::breakDown(string txt) {
-	vector<Word> w;
+vector<SearchTask> SearchEngine::breakDown(string txt) {
+	vector<SearchTask> w;
+	w.push_back(SearchTask());
 	vector<string> s = split(txt);
+	bool need_push = false;
 	for (int i = 0; i < s.size(); i++) {
 		if (checkStopWord(s[i])) continue;
-		Word word(s[i]);
-		executeWord(word);
-		w.push_back(word);
-		if (false) continue;
-		cout << "Word [" << i << "] :";
-		switch (word.function) {
-		case 0:
-			cout << " (N) ";
-			break;
-		case 1:
-			cout << " ($) ";
-			break;
-		case 2:
-			cout << " (#) ";
-			break;
+		if (need_push) {
+			w.push_back(SearchTask());
+			need_push = false;
 		}
-		cout << word.word << endl;
+		int flag = getFlag(s[i]);
+		if (flag == -1) {
+			if (w.back().function < 2 && w.back().function > -1) w.back().words2.push_back(s[i]);
+			else w.back().words.push_back(s[i]);
+		}
+		else {
+			if (flag > 2) {
+				if (!w.back().isEmpty()) w.push_back(SearchTask());
+				w.back().function = flag;
+				w.back().words.push_back(s[i].substr(1, s[i].length() - 1));
+				need_push = true;
+				continue;
+			}
+			if (flag == 2) {
+				w.back().function = flag;
+				w.back().words2.push_back(s[i].substr(1, s[i].length() - 1));
+				need_push = true;
+				continue;
+			}
+			w.back().function = flag;
+		}
 	}
 	return w;
 }
-
 
 void SearchEngine::search(string &Word, int*& score) {
 	int count = 0, ans[5];

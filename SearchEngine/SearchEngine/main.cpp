@@ -84,7 +84,7 @@ int main() {
 			else if ((int)c == 72) t--;
 			else if ((int)c == 77) accept = true;
 			else if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
-				(c >= 'A' && c <= 'Z') || c == ' ') key += c;
+				(c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',') key += c;
 			if (t < 0) t = 0;
 			//Search
 			TrieNode* sug = history.searchSuggestion(key);
@@ -109,8 +109,16 @@ int main() {
 			break;
 		cout << key << endl;
 		saveHistory(history, key);
-		//vector<Word> word = se.breakDown(key);
-		se.search(key, score);
+		//For debug
+		vector<SearchTask> tasks = se.breakDown(key);
+		for (int i = 0; i < tasks.size(); i++) {
+			cout << "Task: " << tasks[i].function << " ";
+			for (int j = 0; j < tasks[i].words.size(); j++) cout << tasks[i].words[j] << " ";
+			cout << "|";
+			for (int j = 0; j < tasks[i].words2.size(); j++) cout << tasks[i].words2[j] << " ";
+			cout << endl;
+		}
+		//se.search(key, score);
 		//Reset and start new search
 		cout << "Press any key to start new search";
 		key = "";
