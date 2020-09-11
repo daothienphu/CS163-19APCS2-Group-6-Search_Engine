@@ -156,6 +156,7 @@ void Trie::insert_sl(string Word) {
 	TrieNode* tmp = root;
 	string tempWord = Word;
 	Word = getValidText(Word);
+	if (Word.length() <= 0) return;
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[Word[i] - subtrahend])
@@ -181,10 +182,11 @@ FileNode* Trie::searchFilesToScore(string& Word) {
 TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
 	if (!root || root->s.length() > 0) return root;
 	if (Word.length() == 0) return root;	
-	if (root->p[(int)Word[0] - 'a']) {
+	int subtrahend = (Word[0] >= 'a') ? 'a' : '0' - 26;
+	if (root->p[(int)Word[0] - subtrahend]) {
 		char tmp = Word[0];
 		Word = Word.erase(0,1);
-		return Trie::getSuggestion(root->p[(int)tmp-'a'], Word);
+		return Trie::getSuggestion(root->p[(int)tmp-subtrahend], Word);
 	}
 	return nullptr;
 }

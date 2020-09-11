@@ -9,10 +9,6 @@ int* score = new int[11268]{ 0 };
 #define STOPWORD_PATH "../SearchEngine/Data/stopWords.txt"
 #define DATA_PATH "../SearchEngine/Data/dataList.txt"
 
-void deleteChar(int k) {
-	for (int i = 0; i < k; i++)cout << '\b' << (char)32 << '\b';
-}
-
 void WriteColor(int color, string text) {
 	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
@@ -39,6 +35,7 @@ void loadHistory(Trie& history) {
 	cout << "[DEBUG] Loaded history " << k << endl;
 }
 void saveHistory(Trie& history, string queries) {
+	if (queries.length() <= 0) return;
 	history.insert_sl(queries);
 	ofstream out;
 	out.open(HISTORY_PATH, ios::app);
@@ -57,7 +54,7 @@ int main() {
 	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
     se.input_stop_words("../SearchEngine/Data/stopWords.txt");
-	se.input();
+	//se.input();
 
 	cout << TrieNode::numTrieNode << endl;
 	
@@ -104,7 +101,7 @@ int main() {
 				WriteColor(t == i? 44 : 36, set[i]);
 				cout << endl;
 			}
-		} while ((int)c != 13);
+		} while ((int)c != 13 || key.length() <= 0);
 		if (key == "exit")
 			break;
 		cout << key << endl;

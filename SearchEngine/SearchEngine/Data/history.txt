@@ -8,7 +8,6 @@ chiu luon do khong hieu gi luon
 con ca doi nam trong doi ca
  con me may doKKK
 search
-
 hello
 con cho +conbo -conmeo chiu luon do AND chet tia may di
 con me may do AND chiu luon do con di
@@ -19,3 +18,7 @@ ma may chiu luon do con di
 lon que gi vay
 lfajsldfkjaslfkjaslfkjaslfdkjasldfkj AND djlkfsdjlkfjl dfalskfdjlskdf
 con me may AND con cho con meo +conlon -conbo Camera $300
+3000000
+con me may 4000 do la do
+con me may 4500 tien viet
+con me may 42132131 
