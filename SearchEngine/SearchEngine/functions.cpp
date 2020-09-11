@@ -37,7 +37,7 @@ vector<string> split(string queries) {
 			old_pos = i;
 		}
 	while (queries[old_pos] == ' ') old_pos++;
-	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
+	arr.push_back(queries.substr(old_pos, queries.length() - 1 - old_pos));
 	return arr;
 }
 string toLower(string str) {
