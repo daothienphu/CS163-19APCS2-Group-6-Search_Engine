@@ -109,8 +109,8 @@ int main() {
 			break;
 		cout << key << endl;
 		saveHistory(history, key);
-		vector<Word> word = se.breakDown(key);
-
+		//vector<Word> word = se.breakDown(key);
+		se.search(key, score);
 		//Reset and start new search
 		cout << "Press any key to start new search";
 		key = "";

@@ -37,6 +37,7 @@ struct TrieNode {
 	    numTrieNode++;
 	}
 	string s;
+	bool end = false;
 };
 
 struct Word {

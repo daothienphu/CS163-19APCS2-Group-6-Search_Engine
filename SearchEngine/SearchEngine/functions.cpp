@@ -155,7 +155,7 @@ void Trie::insert_sl(string Word) {
 		root = new TrieNode;
 	TrieNode* tmp = root;
 	string tempWord = Word;
-	Word = getValidTxt(Word);
+	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[Word[i] - subtrahend])
@@ -201,7 +201,7 @@ void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
 		if (root->p[i]) getResult(root->p[i], resultSet);
 }
 TrieNode* Trie::searchSuggestion(string Word) {
-	return getSuggestion(root, getValidTxt(Word));
+	return getSuggestion(root, getValidText(Word));
 }
 #pragma endregion
 
