@@ -5,6 +5,10 @@
 #include <ctime>
 #include <vector>
 #include <string>
+#include <cstring>
+#include <queue>
+#include <utility>
+#include <tuple>
 
 using namespace std;
 
@@ -106,6 +110,7 @@ struct SearchEngine {
 	void addScore(string query, int*& score);
 	void operator3(string query, int*& score);
 	void operator5(string query, int*& score);
+	void operator9(string query, int*& score);
 
 	void rankResult(int ans[], int &count, int*& score);
 

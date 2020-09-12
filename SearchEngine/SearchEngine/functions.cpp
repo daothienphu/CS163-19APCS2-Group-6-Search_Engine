@@ -1,5 +1,6 @@
 #include "SearchEngine.h"
-#include "vector"
+
+using namespace std;
 
 #pragma region Time Measurement
 clock_t ___start_time = clock();
@@ -102,6 +103,7 @@ void WriteInColor(int color, string text) {
 int TrieNode::numTrieNode = 0;
 
 void Trie::input(string &filename, int file) {
+	#pragma warning(suppress : 4996)
     FILE *fin = fopen(filename.c_str(), "r");
     if (fin == NULL) return;
 
@@ -365,20 +367,91 @@ void SearchEngine::addScore(string query, int*& score) {
 void SearchEngine::operator5(string query, int*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query);
-	for (files; files != nullptr; files = files->Next)
-		score[files->file] -= 10000;
-	for (int i = 0; i < searchEngineNumOfDataFiles; ++i)
-		if (score[i] < 5000) score[i] += 10000;
-		else score[i] = -1;
+	
+	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
+		if (i == files->file)
+			files = files->Next;
+		else
+			score[i] = -1;
 }
 //only used for the word behind "-" operator
 void SearchEngine::operator3(string query, int*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query);
+
 	for (files; files != nullptr; files = files->Next)
 		score[files->file] = -1;
 }
 
+void SearchEngine::operator9(string query, int*& score)
+{
+	vector <string> wordVector = split(query.substr(1, query.length() - 2));
+	vector <FileNode*> files;
+	for (int i = 0; i < wordVector.size(); i++)
+		files.push_back(root->searchFilesToScore(wordVector[i]));
+
+	#pragma region HEAP_DECLEARATION
+	typedef tuple <FileNode*, PosNode*, int> HeapNode;
+	//file - pos - word idx
+	auto heap_comp = [](const HeapNode& a, const HeapNode& b)
+	{
+		FileNode *aFile, *bFile;
+		PosNode *aPos, *bPos;
+		tie(aFile, aPos, ignore) = a;
+		tie(bFile, bPos, ignore) = b;
+
+		return (aFile->file > bFile->file) || (aFile->file == bFile->file && aPos > bPos);
+	};
+	priority_queue <HeapNode, vector <HeapNode>, decltype(heap_comp)> pq (heap_comp);
+	#pragma endregion 
+
+	for (int i = 0; i < files.size(); i++)
+	{
+		if (files[i] != nullptr)
+			return;
+		pq.push(make_tuple(files[i], files[i]->posRoot, i));
+	}
+
+	int cnt_word = 0, pre_file = 0, exp_pos;
+	while (!pq.empty())
+	{
+		FileNode* file;
+		PosNode* pos;
+		int word;
+		tie(file, pos, word) = pq.top();
+		pq.pop();
+
+		//Proccess continuous
+		if (file->file != pre_file)
+			cnt_word = 0;
+		if (word == cnt_word && (!word || exp_pos == pos->pos))
+		{
+			++cnt_word;
+			exp_pos = pos->pos + wordVector[word].size();
+			if (cnt_word >= wordVector.size())
+			{
+				score[file->file] += wordVector.size();
+				cnt_word = 0;
+			}
+		}
+		else cnt_word = 0;
+		pre_file = file->file;
+
+		//Push next pos
+		pos = pos->Next;
+		if (pos != nullptr)
+			pq.push(make_tuple(file, pos, word));
+		else
+		{
+			file = file->Next;
+			if (file != nullptr)
+			{
+				pos = file->posRoot;
+				pq.push(make_tuple(file, pos, word));
+			}
+		}
+	}
+}
 
 void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 	count = 0;
