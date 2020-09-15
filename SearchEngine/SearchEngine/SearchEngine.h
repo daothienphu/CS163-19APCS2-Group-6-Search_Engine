@@ -35,7 +35,14 @@ struct FileNode {
     PosNode *posRoot = nullptr;
     FileNode *Next;
 };
-
+struct SearchTask {
+	int function = -1;
+	vector<string> words;
+	vector<string> words2;
+	bool isEmpty() {
+		return (words.size() == 0 && words2.size() == 0);
+	}
+};
 struct TrieNode {
     static int numTrieNode;
 	TrieNode* p[trieCharSize]{ 0 };
@@ -50,28 +57,12 @@ struct TrieNode {
 	    inTitleRoot = nullptr;
 	    numTrieNode++;
 	}
-};
-
-struct Word {
-	string word;
-	int v1 = -1, v2 = -1;
-	int function = 0;
-
-	Word(string w) {
-		word = w;
-	}
-	/*
-	Function
-	1 - Normal word
-	2 - $ Price tag
-	3 - # Hash tag
-	4 - * Place holder
-	5 - $..$ Range price
-	*/
+	string s;
 };
 
 struct Trie {
 	TrieNode* root = nullptr;
+
 	int map[255];
 
 	Trie() {
@@ -83,16 +74,18 @@ struct Trie {
         map['$'] = 38;
 	}
 
+	void insert_sl(string Word);
+
+
 	void input(string &filename, int file);
     void input(ifstream& in, int file, bool inTitle = false);
 	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
 	FileNode* searchFilesToScore(string& Word);
-	void delPointers(TrieNode* root);
 
-	//for debug
-	void display();
-	void displayWords(TrieNode* root, string Word);
+	TrieNode* getSuggestion(TrieNode* root, string Word);
+	TrieNode* searchSuggestion(string Word); 
+	void getResult(TrieNode* root, vector<string>& resultSet);
 };
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
@@ -103,7 +96,7 @@ struct SearchEngine {
 	void input_stop_words(string path);
 	void input();
 
-	vector<Word> breakDown(string txt);
+	vector<SearchTask> breakDown(string txt);
 
 	void search(string &Word, int*& score);
 

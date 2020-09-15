@@ -190,6 +190,7 @@ void Trie::insert(string &Word, int file, int pos, bool inTitle) {
 void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	if (!root) return;
 	TrieNode* tmp = root;
+	string tempWord = Word;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
 		//int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
@@ -201,7 +202,21 @@ void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	FileNode *fileRoot = (inTitle ? tmp->inTitleRoot : tmp->fileRoot);
 	for (FileNode *p = fileRoot; p != nullptr && count < 5; p = p->Next) ans[count++] = p->file;
 }
-
+void Trie::insert_sl(string Word) {
+	if (!root)
+		root = new TrieNode;
+	TrieNode* tmp = root;
+	string tempWord = Word;
+	Word = getValidText(Word);
+	if (Word.length() <= 0) return;
+	for (int i = 0; i < Word.length(); ++i) {
+		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
+		if (!tmp->p[Word[i] - subtrahend])
+			tmp->p[Word[i] - subtrahend] = new TrieNode;
+		tmp = tmp->p[Word[i] - subtrahend];
+	}
+	tmp->s = tempWord;
+}
 //basically search, but returns FileNode =)))
 FileNode* Trie::searchFilesToScore(string& Word) {
 	if (!root) return nullptr;
@@ -212,11 +227,35 @@ FileNode* Trie::searchFilesToScore(string& Word) {
 		if (!tmp->p[Word[i] - subtrahend]) return nullptr;
 		tmp = tmp->p[Word[i] - subtrahend];
 	}
-
 	if (tmp->stopWord) return nullptr;
 	return tmp->fileRoot;
 }
 
+TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
+	if (!root || root->s.length() > 0) return root;
+	if (Word.length() == 0) return root;	
+	int subtrahend = (Word[0] >= 'a') ? 'a' : '0' - 26;
+	if (root->p[(int)Word[0] - subtrahend]) {
+		char tmp = Word[0];
+		Word = Word.erase(0,1);
+		return Trie::getSuggestion(root->p[(int)tmp-subtrahend], Word);
+	}
+	return nullptr;
+}
+#define MAX_RESULT 3
+void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
+	if (!root) return;
+	if (resultSet.size() >= MAX_RESULT) return;
+	if (root->s.length() > 0) {
+		resultSet.push_back(root->s);
+		return;
+	}
+	for (int i = 0; i < 36; ++i)
+		if (root->p[i]) getResult(root->p[i], resultSet);
+}
+TrieNode* Trie::searchSuggestion(string Word) {
+	return getSuggestion(root, getValidText(Word));
+}
 #pragma endregion
 
 #pragma region Search Engine Algorithms
@@ -253,7 +292,7 @@ void SearchEngine::input() {
     int progress = 0, p;
     string fileName;
 
-    for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
+	for (int i = 0; i < searchEngineNumOfDataFiles; ++i) {
 	    p = trunc((double) 100 * i / searchEngineNumOfDataFiles);
 	    if (p / 25 > progress) cout << 25 * (++progress) << "% files loaded in " << close() << " second(s).\n";
 
@@ -262,46 +301,57 @@ void SearchEngine::input() {
 		root->input(fileName, i);
 		//root->input(dataIn, i);
 	}
-
     cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() << " second(s).\n\n";
 }
 
-void executeWord(Word& word) {
-	switch (word.word[0]) {
-	case '#':
-		word.function = 2;
-		break;
+int getFlag(string Word) {
+	if (Word == "AND") return 0;
+	if (Word == "OR") return 1;
+	switch (Word[0]) {
 	case '$':
-		word.function = 1;
-		break;
+		return 2;
+	case '+':
+		return 3;
+	case '-':
+		return 4;
 	}
+	return -1;
 }
-vector<Word> SearchEngine::breakDown(string txt) {
-	vector<Word> w;
+vector<SearchTask> SearchEngine::breakDown(string txt) {
+	vector<SearchTask> w;
+	w.push_back(SearchTask());
 	vector<string> s = split(txt);
+	bool need_push = false;
 	for (int i = 0; i < s.size(); i++) {
-		//if (checkStopWord(s[i])) continue;
-		Word word(s[i]);
-		executeWord(word);
-		w.emplace_back(word);
-		if (false) continue;
-		cout << "Word [" << i << "] :";
-		switch (word.function) {
-		case 0:
-			cout << " (N) ";
-			break;
-		case 1:
-			cout << " ($) ";
-			break;
-		case 2:
-			cout << " (#) ";
-			break;
+		if (checkStopWord(s[i])) continue;
+		if (need_push) {
+			w.push_back(SearchTask());
+			need_push = false;
 		}
-		cout << word.word << endl;
+		int flag = getFlag(s[i]);
+		if (flag == -1) {
+			if (w.back().function < 2 && w.back().function > -1) w.back().words2.push_back(s[i]);
+			else w.back().words.push_back(s[i]);
+		}
+		else {
+			if (flag > 2) {
+				if (!w.back().isEmpty()) w.push_back(SearchTask());
+				w.back().function = flag;
+				w.back().words.push_back(s[i].substr(1, s[i].length() - 1));
+				need_push = true;
+				continue;
+			}
+			if (flag == 2) {
+				w.back().function = flag;
+				w.back().words2.push_back(s[i].substr(1, s[i].length() - 1));
+				need_push = true;
+				continue;
+			}
+			w.back().function = flag;
+		}
 	}
 	return w;
 }
-
 
 void SearchEngine::search(string &Word, int*& score) {
 	int count = 0, ans[5];
