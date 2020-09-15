@@ -32,11 +32,11 @@ vector<string> split(string queries) {
 	for (int i = 1; i < queries.length() - 1; i++)
 		if (queries[i] == ' ' && queries[size_t(i) - 1] != ' ' && queries[size_t(i) + 1] != ' ') {
 			while (queries[old_pos] == ' ') old_pos++;
-			arr.push_back(queries.substr(old_pos, size_t(i) - old_pos));
+			arr.emplace_back(queries.substr(old_pos, size_t(i) - old_pos));
 			old_pos = i;
 		}
 	while (queries[old_pos] == ' ') old_pos++;
-	arr.push_back(queries.substr(old_pos, queries.length() - old_pos));
+	arr.emplace_back(queries.substr(old_pos, queries.length() - old_pos));
 	return arr;
 }
 
@@ -223,7 +223,7 @@ FileNode* Trie::searchFilesToScore(string& Word) {
 void SearchEngine::loadDataList(ifstream &in) {
     string filename;
 	while (getline(in, filename)) //changed this from in >> filename
-		if (filename.size()) dataList.push_back(filename);
+		if (filename.size()) dataList.emplace_back(filename);
 
     searchEngineNumOfDataFiles = dataList.size();
 
@@ -283,7 +283,7 @@ vector<Word> SearchEngine::breakDown(string txt) {
 		//if (checkStopWord(s[i])) continue;
 		Word word(s[i]);
 		executeWord(word);
-		w.push_back(word);
+		w.emplace_back(word);
 		if (false) continue;
 		cout << "Word [" << i << "] :";
 		switch (word.function) {
@@ -332,7 +332,7 @@ void SearchEngine::search(string &Word, int*& score) {
 	vector<string> queryToHighlight; //will change later
 	for (int i = 0; i < splittedQuery.size(); ++i)
 		if (splittedQuery[i][0] != '-')
-			queryToHighlight.push_back(splittedQuery[i]);
+			queryToHighlight.emplace_back(splittedQuery[i]);
 	
 	for (int i = 0; i < count; ++i)
 		writeText(ans[i], queryToHighlight);
@@ -388,7 +388,7 @@ void SearchEngine::operator9(string query, int*& score)
 	vector <string> wordVector = split(query.substr(1, query.length() - 2));
 	vector <FileNode*> files;
 	for (int i = 0; i < wordVector.size(); i++)
-		files.push_back(root->searchFilesToScore(wordVector[i]));
+		files.emplace_back(root->searchFilesToScore(wordVector[i]));
 
 	#pragma region HEAP_DECLEARATION
 	typedef tuple <FileNode*, PosNode*, int> HeapNode;
