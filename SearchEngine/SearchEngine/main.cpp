@@ -106,16 +106,7 @@ int main() {
 			break;
 		cout << key << endl;
 		saveHistory(history, key);
-		//For debug
-		vector<SearchTask> tasks = se.breakDown(key);
-		for (int i = 0; i < tasks.size(); i++) {
-			cout << "Task: " << tasks[i].function << " ";
-			for (int j = 0; j < tasks[i].words.size(); j++) cout << tasks[i].words[j] << " ";
-			cout << "|";
-			for (int j = 0; j < tasks[i].words2.size(); j++) cout << tasks[i].words2[j] << " ";
-			cout << endl;
-		}
-		//se.search(key, score);
+		se.search(key, score);
 		//Reset and start new search
 		cout << "Press any key to start new search";
 		key = "";

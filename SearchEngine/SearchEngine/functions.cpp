@@ -79,10 +79,6 @@ string getPrefix(string txt) {
 	}
 	return pre;
 }
-//bool checkStopWord(string txt) {
-//	for (int i = 0; i < stop_words.size(); i++) if (stop_words[i].compare(txt) == 0) return true;
-//	return false;
-//}
 string getSuffix(string txt) {
 	string suf;
 	int i = txt.length() - 1;
@@ -323,7 +319,6 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 	vector<string> s = split(txt);
 	bool need_push = false;
 	for (int i = 0; i < s.size(); i++) {
-		if (checkStopWord(s[i])) continue;
 		if (need_push) {
 			w.push_back(SearchTask());
 			need_push = false;
@@ -358,32 +353,38 @@ void SearchEngine::search(string &Word, int*& score) {
 //
 //    root->search(Word, ans, count);
 //    for (int i = 0; i<count; i++) writeText(ans[i], Word);
-
+	vector<SearchTask> tasks = breakDown(Word);
+	vector<string> queryToHighlight;
 	memset(score, 0, searchEngineNumOfDataFiles * sizeof(int));
-
-	vector<string> splittedQuery = split(Word);
-
-	//double time = close(), time1;
-	for (int i = 0; i < splittedQuery.size(); i++) {
-		if (splittedQuery[i][0] == '-')
-			operator3(splittedQuery[i].substr(1 , splittedQuery[i].length() - 1), score);
-		else if (splittedQuery[i][0] == '+')
-			operator5(splittedQuery[i].substr(1, splittedQuery[i].length() - 1), score);
-		else
-			addScore(splittedQuery[i], score);
-
-		//time1 = close();
-		//cout << time1 - time << endl;
-		//time = time1;
+	for (int i = 0; i < tasks.size(); i++) {
+		if (true) {
+			cout << "Task: " << tasks[i].function << " ";
+			for (int j = 0; j < tasks[i].words.size(); j++) cout << tasks[i].words[j] << " ";
+			cout << "|";
+			for (int j = 0; j < tasks[i].words2.size(); j++) cout << tasks[i].words2[j] << " ";
+			cout << endl;
+		}
+		//double time = close(), time1;
+		for (int k = 0; k < tasks[i].words.size(); k++) {
+			switch (tasks[i].function) {
+			case 4:
+				operator3(tasks[i].words[k], score);
+				break;
+			case 3:
+				operator5(tasks[i].words[k], score);
+				break;
+			default:
+				addScore(tasks[i].words[k], score);
+			}
+			if(tasks[i].function != 4)
+				queryToHighlight.emplace_back(tasks[i].words[k]);
+			//time1 = close();
+			//cout << time1 - time << endl;
+			//time = time1;
+		}
 	}
-
 	rankResult(ans, count, score);
 
-	vector<string> queryToHighlight; //will change later
-	for (int i = 0; i < splittedQuery.size(); ++i)
-		if (splittedQuery[i][0] != '-')
-			queryToHighlight.emplace_back(splittedQuery[i]);
-	
 	for (int i = 0; i < count; ++i)
 		writeText(ans[i], queryToHighlight);
 

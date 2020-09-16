@@ -21,4 +21,8 @@ con me may AND con cho con meo +conlon -conbo Camera $300
 3000000
 con me may 4000 do la do
 con me may 4500 tien viet
-con me may 42132131 
+con me may 42132131 con me may AND con cho con meo +conlon -conbo Camera $300
+hello +WordCup
+hello -No
+hello No
+hello games is best known
