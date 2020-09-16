@@ -81,7 +81,7 @@ int main() {
 			else if ((int)c == 72) t--;
 			else if ((int)c == 77) accept = true;
 			else if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
-				(c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',') key += c;
+				(c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',' || c == '*' || c == '"') key += c;
 			if (t < 0) t = 0;
 			//Search
 			TrieNode* sug = history.searchSuggestion(key);

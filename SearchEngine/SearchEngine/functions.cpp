@@ -116,14 +116,13 @@ void Trie::input(string &filename, int file) {
             if (tmp != root) { //check not consecutive space
                 if (!tmp->stopWord) {
                     if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-                        tmp->fileRoot = new FileNode {file, 0, nullptr, tmp->fileRoot};
-                    tmp->fileRoot->posRoot = new PosNode {pos, tmp->fileRoot->posRoot};
+                        tmp->fileRoot = new FileNode (file, 0, tmp->fileRoot);
+					tmp->fileRoot->pos.emplace_back(pos);
                     tmp->fileRoot->num++;
-
                     if (inTitle) {
                         if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
-                            tmp->inTitleRoot = new FileNode {file, 0, nullptr, tmp->inTitleRoot};
-                        tmp->inTitleRoot->posRoot = new PosNode {pos, tmp->inTitleRoot->posRoot};
+                            tmp->inTitleRoot = new FileNode (file, 0, tmp->inTitleRoot);
+						tmp->inTitleRoot->pos.emplace_back(pos);
                         tmp->inTitleRoot->num++;
                     }
                 }
@@ -171,14 +170,14 @@ void Trie::insert(string &Word, int file, int pos, bool inTitle) {
 	    tmp->stopWord = true;
 	else {
 	    if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-            tmp->fileRoot = new FileNode {file, 0, nullptr, tmp->fileRoot};
-	    tmp->fileRoot->posRoot = new PosNode {pos, tmp->fileRoot->posRoot};
+            tmp->fileRoot = new FileNode (file, 0, tmp->fileRoot);
+		tmp->fileRoot->pos.emplace_back(pos);
 	    tmp->fileRoot->num++;
 
 	    if (inTitle) {
             if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
-                tmp->inTitleRoot = new FileNode {file, 0, nullptr, tmp->inTitleRoot};
-            tmp->inTitleRoot->posRoot = new PosNode {pos, tmp->inTitleRoot->posRoot};
+                tmp->inTitleRoot = new FileNode (file, 0, tmp->inTitleRoot);
+			tmp->inTitleRoot->pos.emplace_back(pos);
             tmp->inTitleRoot->num++;
 	    }
 	}
@@ -310,6 +309,9 @@ int getFlag(string Word) {
 		return 3;
 	case '-':
 		return 4;
+	case '"':
+
+		return 5;
 	}
 	return -1;
 }
@@ -365,7 +367,8 @@ void SearchEngine::search(string &Word, int*& score) {
 			cout << endl;
 		}
 		//double time = close(), time1;
-		for (int k = 0; k < tasks[i].words.size(); k++) {
+		operator9(tasks[i].words, score);
+		if(false)for (int k = 0; k < tasks[i].words.size(); k++) {
 			switch (tasks[i].function) {
 			case 4:
 				operator3(tasks[i].words[k], score);
@@ -385,9 +388,10 @@ void SearchEngine::search(string &Word, int*& score) {
 	}
 	rankResult(ans, count, score);
 
-	for (int i = 0; i < count; ++i)
+	for (int i = 0; i < count; ++i) {
+		cout << score[ans[i]]*-1 << endl;
 		writeText(ans[i], queryToHighlight);
-
+	}
 	if (!count)
 	    cout << "No matches found in " << close() << " second(s).\n\n";
 	else
@@ -420,8 +424,10 @@ void SearchEngine::operator5(string query, int*& score) {
 	files = root->searchFilesToScore(query);
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
-		if (i == files->file)
+		if (i == files->file) {
 			files = files->Next;
+			score[i]++;
+		}
 		else
 			score[i] = -1;
 }
@@ -433,8 +439,40 @@ void SearchEngine::operator3(string query, int*& score) {
 	for (files; files != nullptr; files = files->Next)
 		score[files->file] = -1;
 }
-
-void SearchEngine::operator9(string query, int*& score)
+FileNode* getFileNode(FileNode* root, int index) {
+	if (root == nullptr) return nullptr;
+	if (root->file == index) return root;
+	return getFileNode(root->Next, index);
+}
+void SearchEngine::operator9(vector<string> query, int*& score) {
+	//For triming the *
+	while (query.size() > 0 && query.back() == "*") query.pop_back();
+	if (query.size() < 0) return;
+	FileNode* old = root->searchFilesToScore(query[0]);
+	if (old == nullptr)	return;
+	for (int i = 1; i < query.size(); i++) {
+		if (query[i] == "*") continue;
+		FileNode* files;
+		files = root->searchFilesToScore(query[i]);
+		bool flag = false;
+		for (files; files != nullptr; files = files->Next) {
+			FileNode* in_old = getFileNode(old, files->file);
+			if (in_old == nullptr) continue;
+			for (int k = 0; k < in_old->pos.size(); k++) for (int j = 0; j < files->pos.size(); j++) {
+				if (files->pos[j] - in_old->pos[k] == i) {
+					flag = true;
+					if (i == query.size() - 1) {
+						//Save the result here
+						writeText(files->file, query);
+						score[files->file] += 10;
+					}
+				}
+			}
+		}
+		if (!flag) break;
+	}
+}
+/*void SearchEngine::operator9(string query, int*& score)
 {
 	vector <string> wordVector = split(query.substr(1, query.length() - 2));
 	vector <FileNode*> files;
@@ -502,7 +540,7 @@ void SearchEngine::operator9(string query, int*& score)
 			}
 		}
 	}
-}
+}*/
 
 void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 	count = 0;
@@ -515,7 +553,7 @@ void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 		if (score[max] <= 0) break;
 		count++;
 		ans[k++] = max;
-		score[max] = -1;
+		score[max] *= -1;
 	}
 }
 

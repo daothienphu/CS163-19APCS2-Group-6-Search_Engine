@@ -25,15 +25,15 @@ const string WORKPLACE = "../SearchEngine/Data/";
 void start();
 double close();
 
-struct PosNode {
-    int pos;
-    PosNode *Next;
-};
-
 struct FileNode {
     int file, num = 0;
-    PosNode *posRoot = nullptr;
+	vector<int> pos;
     FileNode *Next;
+	FileNode(int f, int n, FileNode* ne) {
+		file = f;
+		num = n;
+		Next = ne;
+	}
 };
 struct SearchTask {
 	int function = -1;
@@ -103,7 +103,7 @@ struct SearchEngine {
 	void addScore(string query, int*& score);
 	void operator3(string query, int*& score);
 	void operator5(string query, int*& score);
-	void operator9(string query, int*& score);
+	void operator9(vector<string> query, int*& score);
 
 	void rankResult(int ans[], int &count, int*& score);
 
