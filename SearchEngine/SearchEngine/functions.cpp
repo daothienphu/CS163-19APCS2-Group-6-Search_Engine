@@ -98,6 +98,16 @@ void WriteInColor(int color, string text) {
 #pragma region Trie implementation
 int TrieNode::numTrieNode = 0;
 
+bool Trie::isStopWord(string& Word) {
+	TrieNode* tmp = root;
+	for (int i = 0; i < Word.length(); i++) {
+		if (tmp->p[map[Word[i]]])
+			tmp = tmp->p[map[Word[i]]];
+		else return false;
+	}
+	return tmp->stopWord;
+}
+
 void Trie::input(string &filename, int file) {
 	#pragma warning(suppress : 4996)
     FILE *fin = fopen(filename.c_str(), "r");
@@ -310,10 +320,22 @@ int getFlag(string Word) {
 	case '-':
 		return 4;
 	case '"':
-
+		return 5;
+	}
+	switch (Word[Word.length() - 1]) {
+	case '$':
+		return 2;
+	case '+':
+		return 3;
+	case '-':
+		return 4;
+	case '"':
 		return 5;
 	}
 	return -1;
+}
+void removeParamenter(string& str, char c) {
+	str.erase(std::remove(str.begin(), str.end(), c), str.end());
 }
 vector<SearchTask> SearchEngine::breakDown(string txt) {
 	vector<SearchTask> w;
@@ -321,6 +343,7 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 	vector<string> s = split(txt);
 	bool need_push = false;
 	for (int i = 0; i < s.size(); i++) {
+		if (root->isStopWord(s[i])) s[i] = "*";
 		if (need_push) {
 			w.push_back(SearchTask());
 			need_push = false;
@@ -331,16 +354,29 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 			else w.back().words.push_back(s[i]);
 		}
 		else {
-			if (flag > 2) {
+			if (flag > 2 && flag < 5) {
 				if (!w.back().isEmpty()) w.push_back(SearchTask());
 				w.back().function = flag;
-				w.back().words.push_back(s[i].substr(1, s[i].length() - 1));
+				removeParamenter(s[i], '+');
+				removeParamenter(s[i], '-');
+				w.back().words.push_back(getValidText(s[i]));
 				need_push = true;
+				continue;
+			}
+			if (flag == 5) {
+				removeParamenter(s[i], '"');
+				w.back().words.push_back(getValidText(s[i]));
+				if (w.back().function == flag) {
+					w.push_back(SearchTask());
+					continue;
+				}
+				w.back().function = flag;
 				continue;
 			}
 			if (flag == 2) {
 				w.back().function = flag;
-				w.back().words2.push_back(s[i].substr(1, s[i].length() - 1));
+				removeParamenter(s[i], '$');
+				w.back().words.push_back(getValidText(s[i]));
 				need_push = true;
 				continue;
 			}
@@ -367,9 +403,11 @@ void SearchEngine::search(string &Word, int*& score) {
 			cout << endl;
 		}
 		//double time = close(), time1;
-		operator9(tasks[i].words, score);
-		if(false)for (int k = 0; k < tasks[i].words.size(); k++) {
+		for (int k = 0; k < tasks[i].words.size(); k++) {
 			switch (tasks[i].function) {
+			case 5:
+				operator9(tasks[i].words, score);
+				break;
 			case 4:
 				operator3(tasks[i].words[k], score);
 				break;
@@ -447,7 +485,7 @@ FileNode* getFileNode(FileNode* root, int index) {
 void SearchEngine::operator9(vector<string> query, int*& score) {
 	//For triming the *
 	while (query.size() > 0 && query.back() == "*") query.pop_back();
-	if (query.size() < 0) return;
+	if (query.size() <= 0) return;
 	FileNode* old = root->searchFilesToScore(query[0]);
 	if (old == nullptr)	return;
 	for (int i = 1; i < query.size(); i++) {
@@ -463,8 +501,8 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 					flag = true;
 					if (i == query.size() - 1) {
 						//Save the result here
-						writeText(files->file, query);
-						score[files->file] += 10;
+						//writeText(files->file, query);
+						score[files->file] += 100;
 					}
 				}
 			}

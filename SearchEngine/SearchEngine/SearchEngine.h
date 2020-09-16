@@ -81,6 +81,9 @@ struct Trie {
     void input(ifstream& in, int file, bool inTitle = false);
 	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
+	
+	bool isStopWord(string& Word);
+
 	FileNode* searchFilesToScore(string& Word);
 
 	TrieNode* getSuggestion(TrieNode* root, string Word);
