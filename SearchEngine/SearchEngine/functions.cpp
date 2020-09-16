@@ -220,12 +220,12 @@ void Trie::insert_sl(string Word) {
 	tmp->s = tempWord;
 }
 //basically search, but returns FileNode =)))
-FileNode* Trie::searchFilesToScore(string& Word, bool intitle = false) {
+FileNode* Trie::searchFilesToScore(string& Word, bool intitle) {
 	if (!root) return nullptr;
 	TrieNode* tmp = root;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
-		if (!tmp->p[map[Word[i]]]) return;
+		if (!tmp->p[map[Word[i]]]) return nullptr;
 		tmp = tmp->p[map[Word[i]]];
 	}
 	if (tmp->stopWord) return nullptr;
@@ -435,7 +435,7 @@ void SearchEngine::search(string &Word, int*& score) {
 			default:
 				addScore(tasks[i].words[k], score);
 			}
-			if (tasks[i].function != 4 && task[i].funciton != 6)
+			if (tasks[i].function != 4 && tasks[i].function != 7)
 				queryToHighlight.emplace_back(tasks[i].words[k]);
 			//time1 = close();
 			//cout << time1 - time << endl;
@@ -456,21 +456,9 @@ void SearchEngine::search(string &Word, int*& score) {
 //used for general case
 void SearchEngine::addScore(string query, int*& score) {
 	FileNode* files;
-	ifstream fileIn;
 	files = root->searchFilesToScore(query);
 	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-//		fileIn.open(WORKPLACE + dataList[files->file]);
-//		string word = "";
-//		if (fileIn.is_open()) {
-//			while (!fileIn.eof()) {
-//				fileIn >> word;
-//				if (getValidText(word) == query && score[files->file] != -1)
-//					score[files->file]++;
-//			}
-//		}
-//		fileIn.close();
-
         score[files->file] += files->num;
 	}
 };
@@ -487,7 +475,7 @@ void SearchEngine::operator5(string query, int*& score) {
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
-			score[i] += files->pos.size();
+			score[i] += files->num;
 			files = files->Next;
 		}
 		else
