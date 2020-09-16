@@ -81,7 +81,7 @@ struct Trie {
     void input(ifstream& in, int file, bool inTitle = false);
 	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
-	FileNode* searchFilesToScore(string& Word);
+	FileNode* searchFilesToScore(string& Word, bool intitle = false);
 
 	TrieNode* getSuggestion(TrieNode* root, string Word);
 	TrieNode* searchSuggestion(string Word); 
@@ -101,9 +101,17 @@ struct SearchEngine {
 	void search(string &Word, int*& score);
 
 	void addScore(string query, int*& score);
+	//   operator1 is "AND" - Tuong
+	//   operator2 is "OR" - Tuong
 	void operator3(string query, int*& score);
+	void operator4(string query, int*& score);
 	void operator5(string query, int*& score);
-	void operator9(vector<string> query, int*& score);
+	void operator6(string filetype, int*& score);
+	//   operator7 is "$" - DONE automatically
+	//   operator8 is "#" - DONE automatically
+	void operator9(vector<string> query, int*& score); //this is operator10
+	//   operator11 is ".." - Thien
+	//   operator12 is "~" - An
 
 	void rankResult(int ans[], int &count, int*& score);
 
