@@ -198,7 +198,6 @@ void Trie::search(string &Word, int ans[], int &count, bool inTitle) {
 	string tempWord = Word;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
-		//int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
 		if (!tmp->p[map[Word[i]]]) return;
 		tmp = tmp->p[map[Word[i]]];
 	}
@@ -215,25 +214,22 @@ void Trie::insert_sl(string Word) {
 	Word = getValidText(Word);
 	if (Word.length() <= 0) return;
 	for (int i = 0; i < Word.length(); ++i) {
-		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
-		if (!tmp->p[Word[i] - subtrahend])
-			tmp->p[Word[i] - subtrahend] = new TrieNode;
-		tmp = tmp->p[Word[i] - subtrahend];
+		if (!tmp->p[map[Word[i]]]) return;
+		tmp = tmp->p[map[Word[i]]];
 	}
 	tmp->s = tempWord;
 }
 //basically search, but returns FileNode =)))
-FileNode* Trie::searchFilesToScore(string& Word) {
+FileNode* Trie::searchFilesToScore(string& Word, bool intitle = false) {
 	if (!root) return nullptr;
 	TrieNode* tmp = root;
 	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); ++i) {
-		int subtrahend = (Word[i] >= 'a') ? 'a' : '0' - 26;
-		if (!tmp->p[Word[i] - subtrahend]) return nullptr;
-		tmp = tmp->p[Word[i] - subtrahend];
+		if (!tmp->p[map[Word[i]]]) return;
+		tmp = tmp->p[map[Word[i]]];
 	}
 	if (tmp->stopWord) return nullptr;
-	return tmp->fileRoot;
+	return (intitle ? tmp->inTitleRoot : tmp->fileRoot);
 }
 
 TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
@@ -321,6 +317,10 @@ int getFlag(string Word) {
 		return 4;
 	case '"':
 		return 5;
+	case 'i': //intitle
+		return 6;
+	case 'f': //filetype
+		return 7;
 	}
 	switch (Word[Word.length() - 1]) {
 	case '$':
@@ -354,7 +354,21 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 			else w.back().words.push_back(s[i]);
 		}
 		else {
-			if (flag > 2 && flag < 5) {
+			if (flag == 7) {
+				if (!w.back().isEmpty()) w.push_back(SearchTask());
+				w.back().function = flag;
+				w.back().words.push_back(s[i].substr(9, s[i].length() - 9)); //filetype:
+				need_push = true;
+				continue;
+			}
+			if (flag == 6) {
+				if (!w.back().isEmpty()) w.push_back(SearchTask());
+				w.back().function = flag;
+				w.back().words.push_back(s[i].substr(8, s[i].length() - 8)); //intitle:
+				need_push = true;
+				continue;
+			}
+			if(flag > 2 && flag < 5) {
 				if (!w.back().isEmpty()) w.push_back(SearchTask());
 				w.back().function = flag;
 				removeParamenter(s[i], '+');
@@ -388,9 +402,7 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 
 void SearchEngine::search(string &Word, int*& score) {
 	int count = 0, ans[5];
-//
-//    root->search(Word, ans, count);
-//    for (int i = 0; i<count; i++) writeText(ans[i], Word);
+
 	vector<SearchTask> tasks = breakDown(Word);
 	vector<string> queryToHighlight;
 	memset(score, 0, searchEngineNumOfDataFiles * sizeof(int));
@@ -406,18 +418,24 @@ void SearchEngine::search(string &Word, int*& score) {
 		for (int k = 0; k < tasks[i].words.size(); k++) {
 			switch (tasks[i].function) {
 			case 5:
-				operator9(tasks[i].words, score);
+				operator9(tasks[i].words, score);//operator10 *
 				break;
 			case 4:
-				operator3(tasks[i].words[k], score);
+				operator3(tasks[i].words[k], score);//  -
 				break;
 			case 3:
-				operator5(tasks[i].words[k], score);
+				operator5(tasks[i].words[k], score);//  +
+				break;
+			case 6:
+				operator4(tasks[i].words[k], score);//  intitle:
+				break;
+			case 7:
+				operator6(tasks[i].words[k], score);//  filetype:
 				break;
 			default:
 				addScore(tasks[i].words[k], score);
 			}
-			if(tasks[i].function != 4)
+			if (tasks[i].function != 4 && task[i].funciton != 6)
 				queryToHighlight.emplace_back(tasks[i].words[k]);
 			//time1 = close();
 			//cout << time1 - time << endl;
@@ -456,6 +474,12 @@ void SearchEngine::addScore(string query, int*& score) {
         score[files->file] += files->num;
 	}
 };
+//only used for the word behind "filetype:" operator
+void SearchEngine::operator6(string filetype, int*& score) {
+	for (int i = 0; i < searchEngineNumOfDataFiles; i++)
+		if (dataList[i].substr(dataList[i].length() - filetype.length(), filetype.length()) != filetype)
+			score[i] = -1;
+}
 //only used for the word behind "+" operator
 void SearchEngine::operator5(string query, int*& score) {
 	FileNode* files;
@@ -463,11 +487,19 @@ void SearchEngine::operator5(string query, int*& score) {
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
+			score[i] += files->pos.size();
 			files = files->Next;
-			score[i]++;
 		}
 		else
 			score[i] = -1;
+}
+//only used for the word behind "intitle:" operator
+void SearchEngine::operator4(string query, int*& score) {
+	FileNode* files;
+	files = root->searchFilesToScore(query, true); //search inTitle
+
+	for (files; files != nullptr; files = files->Next)
+		score[files->file]++;
 }
 //only used for the word behind "-" operator
 void SearchEngine::operator3(string query, int*& score) {
@@ -579,6 +611,8 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 		}
 	}
 }*/
+
+
 
 void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 	count = 0;
