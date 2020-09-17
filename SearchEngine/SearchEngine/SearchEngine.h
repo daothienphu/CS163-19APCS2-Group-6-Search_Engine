@@ -89,6 +89,14 @@ struct Trie {
 	TrieNode* searchSuggestion(string Word); 
 	void getResult(TrieNode* root, vector<string>& resultSet);
 };
+struct UI {
+	vector<string> content;
+	vector<string> sub_box;
+	int offset_x = 10,offset_y = 1;
+	int offset_subbox_x = 2, offset_subbox_y = 0;
+	int k=0;
+	void print();
+};
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
     vector<string> dataList;

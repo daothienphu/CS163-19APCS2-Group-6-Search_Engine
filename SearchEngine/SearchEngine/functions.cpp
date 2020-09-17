@@ -214,7 +214,8 @@ void Trie::insert_sl(string Word) {
 	Word = getValidText(Word);
 	if (Word.length() <= 0) return;
 	for (int i = 0; i < Word.length(); ++i) {
-		if (!tmp->p[map[Word[i]]]) return;
+		if (!tmp->p[map[Word[i]]])
+			tmp->p[map[Word[i]]] = new TrieNode;
 		tmp = tmp->p[map[Word[i]]];
 	}
 	tmp->s = tempWord;
@@ -343,7 +344,7 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 	vector<string> s = split(txt);
 	bool need_push = false;
 	for (int i = 0; i < s.size(); i++) {
-		if (root->isStopWord(s[i])) s[i] = "*";
+		if (root->isStopWord(s[i]) && w.back().function == 5) s[i] = "*"; //Check for stop word for function 5
 		if (need_push) {
 			w.push_back(SearchTask());
 			need_push = false;
@@ -520,8 +521,6 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 				if (files->pos[j] - in_old->pos[k] == i) {
 					flag = true;
 					if (i == query.size() - 1) {
-						//Save the result here
-						//writeText(files->file, query);
 						score[files->file] += 100;
 					}
 				}
@@ -645,3 +644,66 @@ void SearchEngine::writeText(int i, vector<string>& queries) {
 	cout << endl << endl;
 }
 #pragma endregion
+void printCharacter(int n, char c) {
+	for (int j = 0; j < n; j++) cout << c;
+}
+void printCharacterColor(int n, string c, int color) {
+	for (int j = 0; j < n; j++) WriteInColor(color,c);
+}
+int getMaxLength(vector<string>& s) {
+	if (s.size() <= 0) return 0;
+	int max = s[0].length();
+	for (int i = 0; i < s.size(); i++) if (s[i].length() > max) max = s[i].length();
+	return max%2 == 0 ? max : max+1;
+}
+void UI::print() {
+	system("cls");
+	int maxContent = getMaxLength(content);
+	int maxQuery = getMaxLength(content) * 3 / 4;
+	if (sub_box.size() > 0 && getMaxLength(sub_box) > maxQuery) maxQuery = getMaxLength(sub_box);
+	//Print top
+	cout << (char)201;
+	printCharacter(offset_x * 2 + maxContent, (char)205);
+	cout << (char)187<<endl;
+	for (int i = 0; i < content.size() + offset_y*2; i++) {
+		if ((i >= offset_y && i < content.size() + offset_y)) {
+			cout << (char)186;
+			printCharacter(offset_x, ' ');
+			cout << content[i-offset_y];
+			printCharacter(offset_x + maxContent- content[i - offset_y].length(), ' ');
+			cout << (char)186 << endl;
+		}
+		else {
+			cout << (char)186;
+			printCharacter(maxContent+offset_x*2, ' ');
+			cout << (char)186 << endl;
+		}
+	}
+	//Print bottom
+	cout << (char)200;
+	printCharacter((offset_x * 2 + maxContent)/2-maxQuery/2-1 - offset_subbox_x, (char)205);
+	cout << (char)203;
+	printCharacter(maxQuery+offset_subbox_x*2, (char)205);
+	cout << (char)203;
+	printCharacter((offset_x * 2 + maxContent)/2- maxQuery /2-1 - offset_subbox_x, (char)205);
+	cout << (char)188 << endl;
+	for (int i = 0; i < sub_box.size() + offset_subbox_y * 2; i++) {
+		printCharacter((offset_x * 2 + maxContent) / 2 - maxQuery / 2 - offset_subbox_x, ' ');
+		if ((i >= offset_subbox_y && i < sub_box.size() + offset_subbox_y)) {
+			cout << (char)186;
+			printCharacterColor(offset_subbox_x, " ", k == i ? 44 : 36);
+			WriteInColor(k == i ? 44 : 36,sub_box[i - offset_subbox_y]);
+			printCharacterColor(offset_subbox_x + maxQuery - sub_box[i - offset_subbox_y].length(), " ", k == i ? 44 : 36);
+			cout << (char)186 << endl;
+		}
+		else {
+			cout << (char)186;
+			printCharacter(maxQuery + offset_subbox_x * 2, ' ');
+			cout << (char)186 << endl;
+		}
+	}
+	printCharacter((offset_x * 2 + maxContent) / 2 - maxQuery / 2 - offset_subbox_x, ' ');
+	cout << (char)200;
+	printCharacter(maxQuery + offset_subbox_x * 2, (char)205);
+	cout << (char)188 << endl;
+}
