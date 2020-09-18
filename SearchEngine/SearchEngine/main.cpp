@@ -72,7 +72,6 @@ int main() {
 	ui_content.push_back("  /(__/|__/\\_/|_/   |_/\\___/|   |_/  \\___/  |  |_/\\_/|/|_/  |  |_/|__/  ");
 	ui_content.push_back("                                                    /|                  ");
 	ui_content.push_back("                                                    \\|                  ");
-	ui_content.push_back("");
 	ui_content.push_back("    Insert query here:");
 	UI ui;
 	ui.content = ui_content;

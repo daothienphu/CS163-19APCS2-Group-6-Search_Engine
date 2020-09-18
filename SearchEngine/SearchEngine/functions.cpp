@@ -234,26 +234,23 @@ FileNode* Trie::searchFilesToScore(string& Word, bool intitle) {
 }
 
 TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
-	if (!root || root->s.length() > 0) return root;
-	if (Word.length() == 0) return root;	
-	int subtrahend = (Word[0] >= 'a') ? 'a' : '0' - 26;
-	if (root->p[(int)Word[0] - subtrahend]) {
+	if (root == nullptr) return root;
+	if (Word.length() == 0) return root;
+	if (root->p[map[Word[0]]]) {
 		char tmp = Word[0];
 		Word = Word.erase(0,1);
-		return Trie::getSuggestion(root->p[(int)tmp-subtrahend], Word);
+		return Trie::getSuggestion(root->p[map[tmp]], Word);
 	}
 	return nullptr;
 }
-#define MAX_RESULT 3
+#define MAX_RESULT 6
 void Trie::getResult(TrieNode* root, vector<string>& resultSet) {
 	if (!root) return;
+	if (root->s.length() > 0) resultSet.push_back(root->s);
 	if (resultSet.size() >= MAX_RESULT) return;
-	if (root->s.length() > 0) {
-		resultSet.push_back(root->s);
-		return;
-	}
-	for (int i = 0; i < 36; ++i)
-		if (root->p[i]) getResult(root->p[i], resultSet);
+	for (int i = 0; i < trieCharSize; ++i)
+		if (root->p[i]) 
+			getResult(root->p[i], resultSet);
 }
 TrieNode* Trie::searchSuggestion(string Word) {
 	return getSuggestion(root, getValidText(Word));
