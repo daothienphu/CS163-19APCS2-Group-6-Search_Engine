@@ -121,11 +121,17 @@ void Trie::input(string &filename, int file) {
     int pos = 0;
     bool inTitle = true, inTitle_tmp = true;
     TrieNode *tmp = root;
-
+	bool toggle = false;
     do {
         ch = getc(fin);
-        if (ch == '.') inTitle_tmp = false;
 
+		if (toggle && (ch == ' ' || ch == '\n')) {
+			pos++;
+			toggle = false;
+		}
+		if (ch != ' ' && ch != '\n') toggle = true;
+
+        if (ch == '.') inTitle_tmp = false;
         if (ch == ' ' || ch == '\n' || ch == EOF) { //new word
             if (tmp != root) { //check not consecutive space
                 if (!tmp->stopWord) {
@@ -141,7 +147,6 @@ void Trie::input(string &filename, int file) {
 
                 //preparing for new word
                 tmp = root;
-                pos++;
                 if (!inTitle_tmp) inTitle = false; //word right before '.' not put in the list inTitleRoot
             }
         } else if (!isValidChar(ch))
