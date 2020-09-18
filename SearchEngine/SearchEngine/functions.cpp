@@ -657,7 +657,7 @@ void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
 		score[max].score *= -1;
 	}
 }
-int func_toColor[3] = {36,44,45};
+int func_toColor[3] = {40,44,45};
 void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
     string fileName = WORKPLACE + dataList[i];
 	#pragma warning(suppress : 4996)
@@ -669,19 +669,18 @@ void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
 	int* func = new int[MAX_WORDS_DATA] {0};
 	rs[i].getPrintableField(func);
 	int pos = 0;
-	bool toggle = true;
+	bool toggle = false;
 	char ch;
 	do {
 		ch = getc(fin);
-
 		if (toggle && (ch == ' ' || ch == '\n')) {
 			pos++;
 			toggle = false;
-			cout << pos;
 		}
 		if(ch != ' ' && ch != '\n') toggle = true;
 		WriteInColor(func_toColor[func[pos]], ch);
 	} while (ch != EOF);
+	delete func;
 	/*string txt;
 	while (!dataIn.eof()) {
 		dataIn >> txt;

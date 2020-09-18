@@ -85,6 +85,7 @@ int main() {
 		key = "";
 		accept = false;
 		ui.k = 0;
+		for(int i = 0; i < 11268; i++) score[i].clean();
 	}
 	return 0;
 }
