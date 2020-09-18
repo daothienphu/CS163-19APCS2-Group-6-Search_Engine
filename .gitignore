@@ -358,3 +358,4 @@ cmake-build-debug
 *.txt
 *.bin
 *.zip
+history_bin.bin
