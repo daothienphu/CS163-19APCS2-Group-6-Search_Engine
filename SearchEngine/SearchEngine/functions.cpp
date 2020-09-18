@@ -660,24 +660,28 @@ void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
 int func_toColor[3] = {36,44,45};
 void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
     string fileName = WORKPLACE + dataList[i];
-	ifstream dataIn{ fileName };
+	#pragma warning(suppress : 4996)
+	FILE* fin = fopen(fileName.c_str(), "r");
+	if (fin == NULL) return;
 	string msg = "Found match(es) from " + fileName;
 	WriteInColor(cyan, msg);
 	cout << endl;
-	std::string content((std::istreambuf_iterator<char>(dataIn)),
-		(std::istreambuf_iterator<char>()));
 	int* func = new int[MAX_WORDS_DATA] {0};
 	rs[i].getPrintableField(func);
 	int pos = 0;
 	bool toggle = true;
-	for (int i = 0; i < content.size(); i++) {
-		if (toggle && (content[i] == ' ' || content[i] == '\n')) {
+	char ch;
+	do {
+		ch = getc(fin);
+
+		if (toggle && (ch == ' ' || ch == '\n')) {
 			pos++;
 			toggle = false;
+			cout << pos;
 		}
-		if(content[i] != ' ' && content[i] != '\n') toggle = true;
-		WriteInColor(func_toColor[func[pos]], content[i]);
-	}
+		if(ch != ' ' && ch != '\n') toggle = true;
+		WriteInColor(func_toColor[func[pos]], ch);
+	} while (ch != EOF);
 	/*string txt;
 	while (!dataIn.eof()) {
 		dataIn >> txt;
