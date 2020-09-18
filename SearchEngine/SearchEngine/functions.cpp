@@ -493,7 +493,10 @@ void SearchEngine::addScore(string query, ResultSet*& score) {
 	files = root->searchFilesToScore(query);
 	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-        if(score[files->file].score >= 0) score[files->file].score += files->pos.size();
+		if (score[files->file].score >= 0) {
+			score[files->file].score += files->pos.size();
+			score[files->file].addPos(files->pos, 2);
+		}
 	}
 };
 //only used for the word behind "filetype:" operator
@@ -665,7 +668,16 @@ void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
 		(std::istreambuf_iterator<char>()));
 	int* func = new int[MAX_WORDS_DATA] {0};
 	rs[i].getPrintableField(func);
-	for (int i = 0; i < content.size(); i++) WriteInColor(func_toColor[func[0]], content[i]);
+	int pos = 0;
+	bool toggle = true;
+	for (int i = 0; i < content.size(); i++) {
+		if (toggle && (content[i] == ' ' || content[i] == '\n')) {
+			pos++;
+			toggle = false;
+		}
+		if(content[i] != ' ' && content[i] != '\n') toggle = true;
+		WriteInColor(func_toColor[func[pos]], content[i]);
+	}
 	/*string txt;
 	while (!dataIn.eof()) {
 		dataIn >> txt;

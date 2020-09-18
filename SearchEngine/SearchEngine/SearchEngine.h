@@ -64,6 +64,7 @@ struct ResultSet {
 		}
 	}
 	void getPrintableField(int*& arr) {
+		for (int k = 0; k < field.size(); k++) cout << field[k].f << " " << field[k].l << " " << field[k].function<< endl;
 		for (int k = 0; k < field.size(); k++) for (int i = field[k].f; i <= field[k].l; i++) arr[i] = field[k].function;
 	}
 };
