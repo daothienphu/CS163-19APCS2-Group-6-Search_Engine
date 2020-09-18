@@ -1,7 +1,6 @@
-#include "SearchEngine.h"
+﻿#include "SearchEngine.h"
 #include "iostream"
 #include "string"
-#include <conio.h>
 
 ResultSet* score = new ResultSet[11268];
 
@@ -20,36 +19,19 @@ void saveHistory(Trie& history, string queries) {
 int main() {
     ifstream in;
     SearchEngine se;
-
     start();
-    se.loadData();
+    in.open(WORKPLACE + "___index.txt");
+    se.loadDataList(in);
+    in.close();
 
     //for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
+    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
+    se.input();
 
     //cout << TrieNode::numTrieNode << endl;
 
     string key = "";
-    while (1) {
-        cout << "What do you want to search? ('exit' to exit) ";
-        getline(cin, key);
-        if (key == "/index") {
-            cout << "\n";
-            se.index();
-            continue;
-        }
-
-        if (key == "/reindex") {
-            cout << "\n";
-            se.reIndex();
-            continue;
-        }
-
-        if (key == "exit")
-            break;
-        start();
-        se.search(key, score);
-    }
 
     Trie history;
     loadHistory(history);
@@ -75,8 +57,8 @@ int main() {
             else if ((int)c == 80) ui.k++;
             else if ((int)c == 72) ui.k--;
             else if ((int)c == 77) accept = true;
-            else if((key.length() < MAX_QUERY_LENGTH) && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
-                                                          (c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',' || c == '*' || c == '"' || c == ':')) key += c;
+            else if((true) && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
+                               (c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',' || c == '*' || c == '"' || c == ':' || c == '#')) key += c;
             if (ui.k < 0) ui.k = 0;
             //Search
             TrieNode* sug = history.searchSuggestion(key);
@@ -89,7 +71,7 @@ int main() {
                 key = ui.sub_box[ui.k];
                 accept = false;
             }
-            ui.content.back() = "    Search: " + key;
+            ui.content.back() = "    Search: " + (key.length() > MAX_QUERY_LENGTH ? "..."+key.substr(key.length()-1-MAX_QUERY_LENGTH+3,MAX_QUERY_LENGTH-3) : key);
             ui.print();
         } while ((int)c != 13 || key.length() <= 0);
         if (key == "exit")
@@ -98,13 +80,10 @@ int main() {
         start();
         se.search(key, score);
         //Reset and start new search
-        cout << "Press any key to start new search";
         key = "";
         accept = false;
         ui.k = 0;
         for(int i = 0; i < 11268; i++) score[i].clean();
     }
-
-    se.saveData();
     return 0;
 }

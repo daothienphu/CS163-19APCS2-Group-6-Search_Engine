@@ -9,6 +9,7 @@
 #include <queue>
 #include <utility>
 #include <tuple>
+#include <conio.h>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ using namespace std;
 #define STOPWORD -1
 #define INTITLE true
 
-#define MAX_QUERY_LENGTH 60
+#define MAX_QUERY_LENGTH 55
 
 #define MAX_WORDS_DATA 100000
 
@@ -135,7 +136,7 @@ struct UI {
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
     vector<string> dataList;
-    Trie *root;
+    Trie *root = new Trie;
 
     void loadDataList(ifstream &in);
     void input_stop_words(string path);
@@ -153,18 +154,20 @@ struct SearchEngine {
     void operator4(string query, ResultSet*& score);
 
     //   operator5 is "+" - Tuong
-    void operator5(string query, ResultSet*& score); //Tuong checked
+    vector<int> operator5(string query, ResultSet*& score); //Tuong checked
     //
     void operator6(string filetype, ResultSet*& score);
-    //   operator7 is "$" - DONE automatically
-    //   operator8 is "#" - DONE automatically
-    void operator9(vector<string> query, ResultSet*& score); //this is operator10
-    //   operator11 is ".." - Thien
+    //   operator7 is "$" - DONE automatically - Thien
+    //   operator8 is "#" - DONE automatically - Thien
+    void operator8(string query, ResultSet*& score);
+    vector<int> operator9(vector<string> query, ResultSet*& score); //this is operator10
+    //   operator11 is "$" - Thien
     //   operator12 is "~" - An
+    void operator11(int a, int b, ResultSet*& score);
 
     void rankResult(int ans[], int &count, ResultSet*& score);
 
-    void writeText(int i, ResultSet*& rs, vector<string>& queries);
+    void writeText(int i, ResultSet*& rs);
 
     void saveFile(fstream& out, FileNode *fileRoot);
     void loadFile(fstream& in, FileNode* fileRoot);

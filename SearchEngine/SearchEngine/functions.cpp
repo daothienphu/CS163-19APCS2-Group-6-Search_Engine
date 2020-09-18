@@ -300,10 +300,9 @@ void SearchEngine::loadDataList(ifstream &in) {
 
     searchEngineNumOfDataFiles = dataList.size();
 
-    cout << "Data list loaded in " << close() * 1000 << " millisecond(s).\n";
+    cout << "Data list loaded in " << close() << " second(s).\n";
 }
 void SearchEngine::input_stop_words(string path) {
-    start();
     ifstream input;
     input.open(path);
 
@@ -336,6 +335,7 @@ void SearchEngine::input(int st) {
         root->input(fileName, i);
         //root->input(dataIn, i);
     }
+    cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() * 1000 << " millisecond(s).\n\n";
 }
 
 int getFlag(string Word) {
@@ -352,6 +352,8 @@ int getFlag(string Word) {
             return 4;
         case '"':
             return 5;
+        case '#':
+            return 8;
     }
     switch (Word[Word.length() - 1]) {
         case '$':
@@ -362,6 +364,8 @@ int getFlag(string Word) {
             return 4;
         case '"':
             return 5;
+        case '#':
+            return 8;
     }
     return -1;
 }
@@ -407,9 +411,17 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
                 need_push = true;
                 continue;
             }
-            if (flag == 5) {
-                removeParamenter(s[i], '"');
+            if (flag == 8) {
+                if (!w.back().isEmpty()) w.push_back(SearchTask());
+                w.back().function = flag;
                 w.back().words.push_back(getValidText(s[i]));
+                need_push = true;
+                continue;
+            }
+            if (flag == 5) {
+                if (!w.back().isEmpty() && w.back().function != flag) w.push_back(SearchTask());
+                removeParamenter(s[i], '"');
+                if (!root->isStopWord(s[i])) w.back().words.push_back(getValidText(s[i]));
                 if (w.back().function == flag) {
                     w.push_back(SearchTask());
                     continue;
@@ -420,21 +432,44 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
             if (flag == 2) {
                 w.back().function = flag;
                 removeParamenter(s[i], '$');
-                w.back().words.push_back(getValidText(s[i]));
+                int k = -1, k1 = -1;
+                for (int l = 0; l < s[i].length(); l++) if (s[i][l] == '.') {
+                        if (k == -1) k = l;
+                        else k1 = l;
+                    }
+                if (k != -1) {
+                    w.back().words.push_back(getValidText(s[i].substr(0,k)));
+                    w.back().words2.push_back(getValidText(s[i].substr(k1,s[i].length()-k1)));
+                }else w.back().words.push_back(getValidText(s[i]));
                 need_push = true;
                 continue;
             }
             w.back().function = flag;
         }
     }
+    auto comp = [](const SearchTask& a, const SearchTask& b)
+    {
+        return a.function > b.function;
+    };
+    sort(w.begin(), w.end(), comp);
     return w;
 }
-
+void printCharacter(int n, char c) {
+    for (int j = 0; j < n; j++) cout << c;
+}
+void printCharacterColor(int n, char c, int color) {
+    for (int j = 0; j < n; j++) WriteInColor(color, c);
+}
+// Normal, Exact, +, General, intitle, money
+string func_toString[7] = { "Result for single words",
+                            "Result for exact phrase",
+                            "Result for + operator",
+                            "Result for single words search",
+                            "Result for intitle search", "Result for $..$ or $ search", "Result for # search"};
+int func_toColor[7] = { 40,44,41,45,43,42,104 };
 void SearchEngine::search(string &Word, ResultSet*& score) {
     int count = 0, ans[5];
-
     vector<SearchTask> tasks = breakDown(Word);
-    vector<string> queryToHighlight;
     memset(score, 0, searchEngineNumOfDataFiles * sizeof(int));
     for (int i = 0; i < tasks.size(); i++) {
         if (true) {
@@ -454,7 +489,15 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
                 operator9(tasks[i].words2, score);
                 break;
             case 0: //AND
-
+                vector<int> w1 = operator9(tasks[i].words, score);
+                vector<int> w2 = operator9(tasks[i].words2, score);
+                for (int j = 0; j < searchEngineNumOfDataFiles; ++j) {
+                    int k = 0;
+                    for (int i = 0; i < w1.size(); i++) if (w1[i] == j) { k++; break; }
+                    for (int i = 0; i < w2.size(); i++) if (w2[i] == j) { k++; break; }
+                    if (k >= 2) score[j].score += 10;
+                    else score[j].score=- 1;
+                }
                 break;
         }
         for (int k = 0; k < tasks[i].words.size(); k++) {
@@ -471,26 +514,54 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
                 case 7:
                     operator6(tasks[i].words[k], score);//  filetype:
                     break;
+                case 8:
+                    operator8(tasks[i].words[k], score);// #
+                    break;
+                case 2:
+                    operator11(stoi(tasks[i].words[k]), (tasks[i].words2.size() <= 0 ?
+                                                         stoi(tasks[i].words[k])
+                                                                                     : stoi(tasks[i].words2[0])), score);
+                    break;
                 case -1:
                     addScore(tasks[i].words[k], score);
+                    break;
             }
-            if (tasks[i].function != 4 && tasks[i].function != 7)
-                queryToHighlight.emplace_back(tasks[i].words[k]);
             //time1 = close();
             //cout << time1 - time << endl;
             //time = time1;
         }
     }
+    //_getch();
     rankResult(ans, count, score);
+    int k = 0;
+    char c;
+    bool accept = false;
+    double time = close();
+    do {
+        system("cls");
+        if (!count)
+            cout << "No matches found in " << time << " second(s).\n\n";
+        else{
+            for (int i = 1; i < 7; i++) {
+                printCharacter(3, ' ');
+                printCharacterColor(10, ' ', func_toColor[i]);
+                cout << " - " << func_toString[i] << endl;
+            }
+            cout << count << " matches found in " << time << " second(s).\n\n";
+            cout << "Printing result NO." << k+1 << " with the score of " << score[ans[k]].score * -1 << endl;
+            WriteInColor(90, "Use ^ and v to navigate through the result set. ENTER to continue searching.");
+            cout << endl << endl;
+            writeText(ans[k], score);
+        }
+        cout << endl << endl;
+        do { c = _getch(); }
+        while((int)c != 80 && (int)c != 72 && (int) c != 13);
+        if ((int)c == 80) k++;
+        else if ((int)c == 72) k--;
+        if (k < 0) k = count - 1;
+        else if (k >= count) k = 0;
 
-    for (int i = 0; i < count; ++i) {
-        cout << score[ans[i]].score *-1 << endl;
-        writeText(ans[i], score, queryToHighlight);
-    }
-    if (!count)
-        cout << "No matches found in " << close() * 1000 << " millisecond(s).\n\n";
-    else
-        cout << count << " matches found in " << close() * 1000 << " millisecond(s).\n\n";
+    } while ((int)c != 13);
 }
 //used for general case
 void SearchEngine::addScore(string query, ResultSet*& score) {
@@ -500,7 +571,7 @@ void SearchEngine::addScore(string query, ResultSet*& score) {
     for (files; files != nullptr; files = files->Next) {
         if (score[files->file].score >= 0) {
             score[files->file].score += files->pos.size();
-            score[files->file].addPos(files->pos, 2);
+            score[files->file].addPos(files->pos, 3);
         }
     }
 };
@@ -510,18 +581,44 @@ void SearchEngine::operator6(string filetype, ResultSet*& score) {
         if (dataList[i].substr(dataList[i].length() - filetype.length(), filetype.length()) != filetype)
             score[i].score = -1;
 }
+//only used for # operator
+void SearchEngine::operator8(string query, ResultSet*& score)
+{
+    FileNode* files = root->searchFilesToScore(query);
+    for (; files != nullptr; files = files->Next)
+    {
+        score[files->file].score += files->pos.size() * 4;
+        score[files->file].addPos(files->pos, 6);
+    }
+}
 //only used for the word behind "+" operator
-void SearchEngine::operator5(string query, ResultSet*& score) {
+vector<int> SearchEngine::operator5(string query, ResultSet*& score) {
     FileNode* files;
     files = root->searchFilesToScore(query);
-
+    vector<int> resultSet;
     for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
         if (i == files->file) {
             score[i].score += files->pos.size();
+            score[i].addPos(files->pos, 2);
             files = files->Next;
+            resultSet.emplace_back(i);
         }
         else
             score[i].score = -1;
+    return resultSet;
+}
+void SearchEngine::operator11(int a, int b, ResultSet*& score) {
+    for (int i = a; i <= b; i++)
+    {
+        string word = "$" + toString(i);
+        FileNode* files = root->searchFilesToScore(word);
+
+        for (; files != nullptr; files = files->Next)
+        {
+            score[files->file].score += files->pos.size()*5;
+            score[files->file].addPos(files->pos, 5);
+        }
+    }
 }
 //only used for the word behind "intitle:" operator
 void SearchEngine::operator4(string query, ResultSet*& score) {
@@ -530,7 +627,7 @@ void SearchEngine::operator4(string query, ResultSet*& score) {
 
     for (files; files != nullptr; files = files->Next) {
         score[files->file].score++;
-        score[files->file].addPos(files->pos, 2);
+        score[files->file].addPos(files->pos, 4);
     }
 }
 //only used for the word behind "-" operator
@@ -546,12 +643,14 @@ FileNode* getFileNode(FileNode* root, int index) {
     if (root->file == index) return root;
     return getFileNode(root->Next, index);
 }
-void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
+vector<int> SearchEngine::operator9(vector<string> query, ResultSet*& score) {
     //For triming the *
+    vector<int> resultSet;
     while (query.size() > 0 && query.back() == "*") query.pop_back();
-    if (query.size() <= 0) return;
+    if (query.size() <= 0) return resultSet;
+    if (query.size() == 1) return operator5(query[0], score);
     FileNode* old = root->searchFilesToScore(query[0]);
-    if (old == nullptr)	return;
+    if (old == nullptr)	return resultSet;
     for (int i = 1; i < query.size(); i++) {
         if (query[i] == "*") continue;
         FileNode* files;
@@ -568,6 +667,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
                                 score[files->file].score += 100;
                                 Field field{in_old->pos[k] ,files->pos[j], 1 };
                                 score[files->file].field.emplace_back(field);
+                                resultSet.emplace_back(files->file);
                             }
                         }
                     }
@@ -575,6 +675,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
         }
         if (!flag) break;
     }
+    return resultSet;
 }
 /*void SearchEngine::operator9(string query, ResultSet*& score)
 {
@@ -582,6 +683,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 	vector <FileNode*> files;
 	for (int i = 0; i < wordVector.size(); i++)
 		files.emplace_back(root->searchFilesToScore(wordVector[i]));
+
 	#pragma region HEAP_DECLEARATION
 	typedef tuple <FileNode*, PosNode*, int> HeapNode;
 	//file - pos - word idx
@@ -591,16 +693,19 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 		PosNode *aPos, *bPos;
 		tie(aFile, aPos, ignore) = a;
 		tie(bFile, bPos, ignore) = b;
+
 		return (aFile->file > bFile->file) || (aFile->file == bFile->file && aPos > bPos);
 	};
 	priority_queue <HeapNode, vector <HeapNode>, decltype(heap_comp)> pq (heap_comp);
-	#pragma endregion
+	#pragma endregion 
+
 	for (int i = 0; i < files.size(); i++)
 	{
 		if (files[i] != nullptr)
 			return;
 		pq.push(make_tuple(files[i], files[i]->posRoot, i));
 	}
+
 	int cnt_word = 0, pre_file = 0, exp_pos;
 	while (!pq.empty())
 	{
@@ -609,6 +714,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 		int word;
 		tie(file, pos, word) = pq.top();
 		pq.pop();
+
 		//Proccess continuous
 		if (file->file != pre_file)
 			cnt_word = 0;
@@ -624,6 +730,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 		}
 		else cnt_word = 0;
 		pre_file = file->file;
+
 		//Push next pos
 		pos = pos->Next;
 		if (pos != nullptr)
@@ -640,6 +747,8 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 	}
 }*/
 
+
+
 void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
     count = 0;
     int k = 0;
@@ -654,8 +763,7 @@ void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
         score[max].score *= -1;
     }
 }
-int func_toColor[3] = {0,44,45};
-void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
+void SearchEngine::writeText(int i, ResultSet*& rs) {
     string fileName = WORKPLACE + dataList[i];
 #pragma warning(suppress : 4996)
     FILE* fin = fopen(fileName.c_str(), "r");
@@ -666,7 +774,7 @@ void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
     int* func = new int[MAX_WORDS_DATA] {0};
     rs[i].getPrintableField(func);
     int pos = 0;
-    bool toggle = false;
+    bool toggle = false, title = true;
     char ch;
     do {
         ch = getc(fin);
@@ -675,27 +783,11 @@ void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
             toggle = false;
         }
         if(ch != ' ' && ch != '\n') toggle = true;
-        WriteInColor(toggle ? func_toColor[func[pos]] : 0, ch);
+        WriteInColor(((title && func[pos] == 0) ? 100 : func_toColor[func[pos]]), ch);
+
+        if (ch == '.') title = false;
     } while (ch != EOF);
     delete func;
-    /*string txt;
-    while (!dataIn.eof()) {
-        dataIn >> txt;
-        string prefix = getPrefix(txt);
-        string suffix = getSuffix(txt);
-        bool isQueryWord = 0;
-        for (int i = 0; i < queries.size(); ++i) {
-            if (getValidText(txt) == getValidText(queries[i])) {
-                cout << prefix;
-                WriteInColor(blueWithBG, getValidWord(txt));
-                cout << suffix;
-                isQueryWord = 1;
-                break;
-            }
-        }
-        if (!isQueryWord) cout << txt;
-        cout << " ";
-    }*/
     cout << endl << endl;
 }
 
@@ -846,12 +938,7 @@ void SearchEngine::reIndex() {
 }
 
 #pragma endregion
-void printCharacter(int n, char c) {
-    for (int j = 0; j < n; j++) cout << c;
-}
-void printCharacterColor(int n, string c, int color) {
-    for (int j = 0; j < n; j++) WriteInColor(color,c);
-}
+
 int getMaxLength(vector<string>& s) {
     if (s.size() <= 0) return 0;
     int max = s[0].length();
@@ -862,7 +949,6 @@ void UI::print() {
     system("cls");
     int maxContent = getMaxLength(content);
     int maxQuery = getMaxLength(content) * 3 / 4;
-    if (sub_box.size() > 0 && getMaxLength(sub_box) > maxQuery) maxQuery = getMaxLength(sub_box);
     //Print top
     cout << (char)201;
     printCharacter(offset_x * 2 + maxContent, (char)205);
@@ -893,9 +979,9 @@ void UI::print() {
         printCharacter((offset_x * 2 + maxContent) / 2 - maxQuery / 2 - offset_subbox_x, ' ');
         if ((i >= offset_subbox_y && i < sub_box.size() + offset_subbox_y)) {
             cout << (char)186;
-            printCharacterColor(offset_subbox_x, " ", k == i ? 44 : 36);
-            WriteInColor(k == i ? 44 : 36,sub_box[i - offset_subbox_y]);
-            printCharacterColor(offset_subbox_x + maxQuery - sub_box[i - offset_subbox_y].length(), " ", k == i ? 44 : 36);
+            printCharacterColor(offset_subbox_x, ' ', k == i ? 44 : 36);
+            WriteInColor(k == i ? 44 : 36,sub_box[i - offset_subbox_y].length() > maxQuery ? sub_box[i - offset_subbox_y].substr(0,maxQuery-3) + "..." : sub_box[i - offset_subbox_y]);
+            printCharacterColor(offset_subbox_x + maxQuery - (sub_box[i - offset_subbox_y].length() > maxQuery ? maxQuery : sub_box[i - offset_subbox_y].length()), ' ', k == i ? 44 : 36);
             cout << (char)186 << endl;
         }
         else {
