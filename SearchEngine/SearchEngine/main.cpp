@@ -19,17 +19,9 @@ void saveHistory(Trie& history, string queries) {
 int main() {
     ifstream in;
     SearchEngine se;
+
     start();
-    in.open(WORKPLACE + "___index.txt");
-    se.loadDataList(in);
-    in.close();
-
-    //for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
-
-    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
-    se.input();
-
-    //cout << TrieNode::numTrieNode << endl;
+    se.loadData();
 
     string key = "";
 
@@ -76,6 +68,14 @@ int main() {
         } while ((int)c != 13 || key.length() <= 0);
         if (key == "exit")
             break;
+        if (key == "/index") {
+            se.index();
+            continue;
+        }
+        if (key == "/reindex") {
+            se.reIndex();
+            continue;
+        }
         saveHistory(history, key);
         start();
         se.search(key, score);
@@ -85,5 +85,7 @@ int main() {
         ui.k = 0;
         for(int i = 0; i < 11268; i++) score[i].clean();
     }
+
+    se.saveData();
     return 0;
 }
