@@ -47,6 +47,7 @@ struct SearchTask {
 	bool isEmpty() {
 		return (words.size() == 0 && words2.size() == 0);
 	}
+	string getQuery(vector<string>& s);
 };
 struct TrieNode {
     static int numTrieNode;
@@ -87,7 +88,7 @@ struct Trie {
 	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
 	
-	bool isStopWord(string& Word);
+	bool isStopWord(string Word);
 	FileNode* searchFilesToScore(string& Word, bool intitle = false);
 
 	TrieNode* getSuggestion(TrieNode* root, string Word);

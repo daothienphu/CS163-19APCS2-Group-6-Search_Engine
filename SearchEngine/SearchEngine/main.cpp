@@ -5,25 +5,13 @@
 
 int* score = new int[11268]{ 0 };
 
-void WriteColor(int color, string text) {
-	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-	GetConsoleScreenBufferInfo(hConsole, &cbInfo);
-	int originalColor = cbInfo.wAttributes;
-	SetConsoleTextAttribute(hConsole, color);
-	cout << text;
-	SetConsoleTextAttribute(hConsole, originalColor);*/
-	cout << "\x1B[" << color << "m" << text << "\033[0m";
-}
 void loadHistory(Trie& history) {
 	fstream history_f{ BINARY_HISTORY_PATH,ios::out | ios::in | ios::binary };
 	history.readTree(history_f, history.root);
 	history_f.close();
 }
 void saveHistory(Trie& history, string queries) {
-	if (queries.length() <= 0) return;
 	history.insert_sl(queries);
-
 	fstream history_f{ BINARY_HISTORY_PATH,ios::out | ios::in | ios::binary };
 	history.saveTree(history_f, history.root);
 	history_f.close();
@@ -49,18 +37,15 @@ int main() {
 	Trie history;
 	loadHistory(history);
 
-	vector<string> ui_content;
-	ui_content.push_back("                             _        ___                               ");
-	ui_content.push_back("    ()                      | |      / (_)             o                ");
-	ui_content.push_back("    /\\  _   __,   ,_    __  | |      \\__   _  _    __,     _  _    _    ");
-	ui_content.push_back("   /  \\|/  /  |  /  |  /    |/ \\     /    / |/ |  /  | |  / |/ |  |/    ");
-	ui_content.push_back("  /(__/|__/\\_/|_/   |_/\\___/|   |_/  \\___/  |  |_/\\_/|/|_/  |  |_/|__/  ");
-	ui_content.push_back("                                                    /|                  ");
-	ui_content.push_back("                                                    \\|                  ");
-	ui_content.push_back("    Insert query here:");
 	UI ui;
-	ui.content = ui_content;
-	//ui.print();
+	ui.content.push_back("                             _        ___                               ");
+	ui.content.push_back("    ()                      | |      / (_)             o                ");
+	ui.content.push_back("    /\\  _   __,   ,_    __  | |      \\__   _  _    __,     _  _    _    ");
+	ui.content.push_back("   /  \\|/  /  |  /  |  /    |/ \\     /    / |/ |  /  | |  / |/ |  |/    ");
+	ui.content.push_back("  /(__/|__/\\_/|_/   |_/\\___/|   |_/  \\___/  |  |_/\\_/|/|_/  |  |_/|__/  ");
+	ui.content.push_back("                                                    /|                  ");
+	ui.content.push_back("                                                    \\|                  ");
+	ui.content.push_back("    Insert query here:");
 	while (1) {
 		char c;
 		bool accept = false;

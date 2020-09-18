@@ -98,8 +98,9 @@ void WriteInColor(int color, string text) {
 #pragma region Trie implementation
 int TrieNode::numTrieNode = 0;
 
-bool Trie::isStopWord(string& Word) {
+bool Trie::isStopWord(string Word) {
 	TrieNode* tmp = root;
+	Word = getValidText(Word);
 	for (int i = 0; i < Word.length(); i++) {
 		if (tmp->p[map[Word[i]]])
 			tmp = tmp->p[map[Word[i]]];
@@ -336,6 +337,8 @@ void SearchEngine::input() {
 int getFlag(string Word) {
 	if (Word == "AND") return 0;
 	if (Word == "OR") return 1;
+	if (Word.length() >= 7 && Word.substr(0, 7) == "intitle") return 6;
+	if (Word.length() >= 8 && Word.substr(0, 8) == "filetype") return 7;
 	switch (Word[0]) {
 	case '$':
 		return 2;
@@ -345,10 +348,6 @@ int getFlag(string Word) {
 		return 4;
 	case '"':
 		return 5;
-	case 'i': //intitle
-		return 6;
-	case 'f': //filetype
-		return 7;
 	}
 	switch (Word[Word.length() - 1]) {
 	case '$':
@@ -390,10 +389,9 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 				continue;
 			}
 			if (flag == 6) {
-				if (!w.back().isEmpty()) w.push_back(SearchTask());
+				if (!w.back().isEmpty() && w.back().function != 6) w.push_back(SearchTask());
 				w.back().function = flag;
 				w.back().words.push_back(s[i].substr(8, s[i].length() - 8)); //intitle:
-				need_push = true;
 				continue;
 			}
 			if(flag > 2 && flag < 5) {
@@ -443,11 +441,20 @@ void SearchEngine::search(string &Word, int*& score) {
 			cout << endl;
 		}
 		//double time = close(), time1;
+		switch (tasks[i].function) {
+		case 5:
+			operator9(tasks[i].words, score);//operator10 * also search exact
+			break;
+		case 1: //OR
+			operator9(tasks[i].words, score);
+			operator9(tasks[i].words2, score);
+			break;
+		case 0: //AND
+
+			break;
+		}
 		for (int k = 0; k < tasks[i].words.size(); k++) {
 			switch (tasks[i].function) {
-			case 5:
-				operator9(tasks[i].words, score);//operator10 * also search exact
-				break;
 			case 4:
 				operator3(tasks[i].words[k], score);//  -
 				break;
@@ -487,7 +494,7 @@ void SearchEngine::addScore(string query, int*& score) {
 	files = root->searchFilesToScore(query);
 	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-        score[files->file] += files->num;
+        if(score[files->file] >= 0) score[files->file] += files->num;
 	}
 };
 //only used for the word behind "filetype:" operator
@@ -548,7 +555,7 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 				if (files->pos[j] - in_old->pos[k] == i) {
 					flag = true;
 					if (i == query.size() - 1) {
-						score[files->file] += 100;
+						if(score[files->file] >= 0) score[files->file] += 100;
 					}
 				}
 			}
@@ -732,4 +739,9 @@ void UI::print() {
 	cout << (char)200;
 	printCharacter(maxQuery + offset_subbox_x * 2, (char)205);
 	cout << (char)188 << endl;
+}
+string SearchTask::getQuery(vector<string>& s) {
+	string ss = "";
+	for (int i = 0; i < s.size(); i++) ss += s[i];
+	return ss;
 }
