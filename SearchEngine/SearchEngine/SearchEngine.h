@@ -134,7 +134,7 @@ struct SearchEngine {
 	//   operator7 is "$" - DONE automatically
 	//   operator8 is "#" - DONE automatically
 	void operator9(vector<string> query, int*& score); //this is operator10
-	//   operator11 is ".." - Thien
+	void operator11(int a, int b, int*& score);
 	//   operator12 is "~" - An
 
 	void rankResult(int ans[], int &count, int*& score);

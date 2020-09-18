@@ -513,7 +513,7 @@ void SearchEngine::operator5(string query, int*& score) {
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
-			score[i] += files->pos.size();
+			score[i] += files->pos.size() * 5;
 			files = files->Next;
 		}
 		else
@@ -525,7 +525,7 @@ void SearchEngine::operator4(string query, int*& score) {
 	files = root->searchFilesToScore(query, true); //search inTitle
 
 	for (files; files != nullptr; files = files->Next)
-		score[files->file]++;
+		score[files->file] += 100;
 }
 //only used for the word behind "-" operator
 void SearchEngine::operator3(string query, int*& score) {
@@ -636,7 +636,15 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 	}
 }*/
 
+void SearchEngine::operator11(int a, int b, int*& score) {
+	for (int i = a; i <= b; i++)
+	{
+		string word = "$" + toString(i);
+		FileNode* files = root->searchFilesToScore(word);
 
+		for (; files != nullptr; files = files->Next) score[files->file] += files->pos.size();
+	}
+}
 
 void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 	count = 0;
