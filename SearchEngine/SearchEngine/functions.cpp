@@ -558,7 +558,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 					if (i == query.size() - 1) {
 						if (score[files->file].score >= 0) {
 							score[files->file].score += 100;
-							Field field{ files->pos[j] , in_old->pos[k] , 1 };
+							Field field{in_old->pos[k] ,files->pos[j], 1 };
 							score[files->file].field.emplace_back(field);
 						}
 					}

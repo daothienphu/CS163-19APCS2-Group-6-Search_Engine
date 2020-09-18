@@ -78,6 +78,7 @@ int main() {
 		if (key == "exit")
 			break;
 		saveHistory(history, key);
+		start();
 		se.search(key, score);
 		//Reset and start new search
 		cout << "Press any key to start new search";
