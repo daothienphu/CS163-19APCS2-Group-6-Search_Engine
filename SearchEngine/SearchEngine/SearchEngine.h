@@ -9,7 +9,7 @@
 #include <queue>
 #include <utility>
 #include <tuple>
-#include <conio.h>
+#include <conio>
 
 using namespace std;
 
@@ -157,8 +157,9 @@ struct SearchEngine {
 	void operator6(string filetype, ResultSet*& score); 
 	//   operator7 is "$" - DONE automatically
 	//   operator8 is "#" - DONE automatically
+
 	void operator9(vector<string> query, ResultSet*& score); //this is operator10
-	//   operator11 is ".." - Thien
+	void operator11(int a, int b, ResultSet*& score);
 	//   operator12 is "~" - An
 
 	void rankResult(int ans[], int &count, ResultSet*& score);
