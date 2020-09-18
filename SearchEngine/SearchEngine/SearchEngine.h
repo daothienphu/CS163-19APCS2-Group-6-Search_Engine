@@ -24,6 +24,8 @@ using namespace std;
 #define DATA_PATH "../SearchEngine/Data/dataList.txt"
 #define MAX_QUERY_LENGTH 60
 
+#define MAX_WORDS_DATA 100000
+
 const string WORKPLACE = "../SearchEngine/Data/";
 //const string WORKPLACE = "/Users/ducanchu/Documents/Assignments/CS163/CS163-19APCS2-Group-6-SearchEngine/SearchEngine/SearchEngine/Data/";
 
@@ -47,6 +49,24 @@ struct SearchTask {
 		return (words.size() == 0 && words2.size() == 0);
 	}
 	string getQuery(vector<string>& s);
+};
+struct Field {
+	int f = -1, l = -1;
+	int function = 0;
+};
+struct ResultSet {
+	vector<Field> field;
+	int score = 0;
+	void addPos(vector<int>& pos, int c) {
+		for (int i = 0; i < pos.size(); i++) {
+			Field f{pos[i],pos[i],c};
+			field.emplace_back(f);
+		}
+	}
+	void getPrintableField(int*& arr) {
+		for (int k = 0; k < field.size(); k++) for (int i = field[k].f; i <= field[k].l; i++) arr[i] = field[k].function;
+		cout << arr[0]<<endl;
+	}
 };
 struct TrieNode {
     static int numTrieNode;
@@ -118,26 +138,26 @@ struct SearchEngine {
 
 	vector<SearchTask> breakDown(string txt);
 
-	void search(string &Word, int*& score);
+	void search(string &Word, ResultSet*& score);
 
-	void addScore(string query, int*& score);// Tuong checked
+	void addScore(string query, ResultSet*& score);// Tuong checked
 	//   operator1 is "AND" - Tuong
 	//   operator2 is "OR" - Tuong
 	//   operator3 is "-" - Tuong
-	void operator3(string query, int*& score); // Tuong checked
-	void operator4(string query, int*& score);
+	void operator3(string query, ResultSet*& score); // Tuong checked
+	void operator4(string query, ResultSet*& score);
 
 	//   operator5 is "+" - Tuong
-	void operator5(string query, int*& score); //Tuong checked
+	void operator5(string query, ResultSet*& score); //Tuong checked
 	//   
-	void operator6(string filetype, int*& score); 
+	void operator6(string filetype, ResultSet*& score); 
 	//   operator7 is "$" - DONE automatically
 	//   operator8 is "#" - DONE automatically
-	void operator9(vector<string> query, int*& score); //this is operator10
+	void operator9(vector<string> query, ResultSet*& score); //this is operator10
 	//   operator11 is ".." - Thien
 	//   operator12 is "~" - An
 
-	void rankResult(int ans[], int &count, int*& score);
+	void rankResult(int ans[], int &count, ResultSet*& score);
 
-	void writeText(int i, vector<string>& queries);
+	void writeText(int i, ResultSet*& rs, vector<string>& queries);
 };

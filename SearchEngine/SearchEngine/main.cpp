@@ -3,7 +3,7 @@
 #include "string"
 #include <conio.h>
 
-int* score = new int[11268]{ 0 };
+ResultSet* score = new ResultSet[11268];
 
 void loadHistory(Trie& history) {
 	fstream history_f{ BINARY_HISTORY_PATH,ios::out | ios::in | ios::binary };

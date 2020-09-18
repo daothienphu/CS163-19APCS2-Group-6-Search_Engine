@@ -93,6 +93,9 @@ string getSuffix(string txt) {
 void WriteInColor(int color, string text) {
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
+void WriteInColor(int color, char c) {
+	cout << "\x1B[" << color << "m" << c << "\033[0m";
+}
 #pragma endregion
 
 #pragma region Trie implementation
@@ -422,7 +425,7 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 	return w;
 }
 
-void SearchEngine::search(string &Word, int*& score) {
+void SearchEngine::search(string &Word, ResultSet*& score) {
 	int count = 0, ans[5];
 
 	vector<SearchTask> tasks = breakDown(Word);
@@ -476,8 +479,8 @@ void SearchEngine::search(string &Word, int*& score) {
 	rankResult(ans, count, score);
 
 	for (int i = 0; i < count; ++i) {
-		cout << score[ans[i]]*-1 << endl;
-		writeText(ans[i], queryToHighlight);
+		cout << score[ans[i]].score *-1 << endl;
+		writeText(ans[i], score, queryToHighlight);
 	}
 	if (!count)
 	    cout << "No matches found in " << close() << " second(s).\n\n";
@@ -485,55 +488,57 @@ void SearchEngine::search(string &Word, int*& score) {
 	    cout << count << " matches found in " << close() << " second(s).\n\n";
 }
 //used for general case
-void SearchEngine::addScore(string query, int*& score) {
+void SearchEngine::addScore(string query, ResultSet*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query);
 	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-        if(score[files->file] >= 0) score[files->file] += files->pos.size();
+        if(score[files->file].score >= 0) score[files->file].score += files->pos.size();
 	}
 };
 //only used for the word behind "filetype:" operator
-void SearchEngine::operator6(string filetype, int*& score) {
+void SearchEngine::operator6(string filetype, ResultSet*& score) {
 	for (int i = 0; i < searchEngineNumOfDataFiles; i++)
 		if (dataList[i].substr(dataList[i].length() - filetype.length(), filetype.length()) != filetype)
-			score[i] = -1;
+			score[i].score = -1;
 }
 //only used for the word behind "+" operator
-void SearchEngine::operator5(string query, int*& score) {
+void SearchEngine::operator5(string query, ResultSet*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query);
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
-			score[i] += files->pos.size();
+			score[i].score += files->pos.size();
 			files = files->Next;
 		}
 		else
-			score[i] = -1;
+			score[i].score = -1;
 }
 //only used for the word behind "intitle:" operator
-void SearchEngine::operator4(string query, int*& score) {
+void SearchEngine::operator4(string query, ResultSet*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query, true); //search inTitle
 
-	for (files; files != nullptr; files = files->Next)
-		score[files->file]++;
+	for (files; files != nullptr; files = files->Next) {
+		score[files->file].score++;
+		score[files->file].addPos(files->pos, 2);
+	}
 }
 //only used for the word behind "-" operator
-void SearchEngine::operator3(string query, int*& score) {
+void SearchEngine::operator3(string query, ResultSet*& score) {
 	FileNode* files;
 	files = root->searchFilesToScore(query);
 
 	for (files; files != nullptr; files = files->Next)
-		score[files->file] = -1;
+		score[files->file].score = -1;
 }
 FileNode* getFileNode(FileNode* root, int index) {
 	if (root == nullptr) return nullptr;
 	if (root->file == index) return root;
 	return getFileNode(root->Next, index);
 }
-void SearchEngine::operator9(vector<string> query, int*& score) {
+void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 	//For triming the *
 	while (query.size() > 0 && query.back() == "*") query.pop_back();
 	if (query.size() <= 0) return;
@@ -551,7 +556,11 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 				if (files->pos[j] - in_old->pos[k] == i) {
 					flag = true;
 					if (i == query.size() - 1) {
-						if(score[files->file] >= 0) score[files->file] += 100;
+						if (score[files->file].score >= 0) {
+							score[files->file].score += 100;
+							Field field{ files->pos[j] , in_old->pos[k] , 1 };
+							score[files->file].field.emplace_back(field);
+						}
 					}
 				}
 			}
@@ -559,7 +568,7 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 		if (!flag) break;
 	}
 }
-/*void SearchEngine::operator9(string query, int*& score)
+/*void SearchEngine::operator9(string query, ResultSet*& score)
 {
 	vector <string> wordVector = split(query.substr(1, query.length() - 2));
 	vector <FileNode*> files;
@@ -631,28 +640,33 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 
 
 
-void SearchEngine::rankResult(int ans[], int &count, int*& score) {
+void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
 	count = 0;
 	int k = 0;
 	for (int i = 0; i < 5; ++i) {
 		int max = 0;
 		for (int j = 1; j < searchEngineNumOfDataFiles; ++j)
-			if (score[j] > score[max])
+			if (score[j].score > score[max].score)
 				max = j;
-		if (score[max] <= 0) break;
+		if (score[max].score <= 0) break;
 		count++;
 		ans[k++] = max;
-		score[max] *= -1;
+		score[max].score *= -1;
 	}
 }
-
-void SearchEngine::writeText(int i, vector<string>& queries) {
+int func_toColor[3] = {36,44,45};
+void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
     string fileName = WORKPLACE + dataList[i];
 	ifstream dataIn{ fileName };
 	string msg = "Found match(es) from " + fileName;
 	WriteInColor(cyan, msg);
 	cout << endl;
-	string txt;
+	std::string content((std::istreambuf_iterator<char>(dataIn)),
+		(std::istreambuf_iterator<char>()));
+	int* func = new int[MAX_WORDS_DATA] {0};
+	rs[i].getPrintableField(func);
+	for (int i = 0; i < content.size(); i++) WriteInColor(func_toColor[func[0]], content[i]);
+	/*string txt;
 	while (!dataIn.eof()) {
 		dataIn >> txt;
 		string prefix = getPrefix(txt);
@@ -669,7 +683,7 @@ void SearchEngine::writeText(int i, vector<string>& queries) {
 		}
 		if (!isQueryWord) cout << txt;
 		cout << " ";
-	}
+	}*/
 	cout << endl << endl;
 }
 #pragma endregion
