@@ -23,7 +23,7 @@ using namespace std;
 #define BINARY_HISTORY_PATH "../SearchEngine/Data/history_bin.bin"
 #define STOPWORD_PATH "../SearchEngine/Data/stopWords.txt"
 #define DATA_PATH "../SearchEngine/Data/dataList.txt"
-#define MAX_QUERY_LENGTH 60
+#define MAX_QUERY_LENGTH 55
 
 #define MAX_WORDS_DATA 100000
 
@@ -152,16 +152,18 @@ struct SearchEngine {
 	void operator4(string query, ResultSet*& score);
 
 	//   operator5 is "+" - Tuong
-	void operator5(string query, ResultSet*& score); //Tuong checked
+	vector<int> operator5(string query, ResultSet*& score); //Tuong checked
 	//   
 	void operator6(string filetype, ResultSet*& score); 
-	//   operator7 is "$" - DONE automatically
-	//   operator8 is "#" - DONE automatically
-	void operator9(vector<string> query, ResultSet*& score); //this is operator10
-	//   operator11 is ".." - Thien
+	//   operator7 is "$" - DONE automatically - Thien
+	//   operator8 is "#" - DONE automatically - Thien
+	void operator8(string query, ResultSet*& score);
+	vector<int> operator9(vector<string> query, ResultSet*& score); //this is operator10
+	//   operator11 is "$" - Thien
 	//   operator12 is "~" - An
+	void operator11(int a, int b, ResultSet*& score);
 
 	void rankResult(int ans[], int &count, ResultSet*& score);
 
-	void writeText(int i, ResultSet*& rs, vector<string>& queries);
+	void writeText(int i, ResultSet*& rs);
 };
