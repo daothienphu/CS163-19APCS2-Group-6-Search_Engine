@@ -64,7 +64,7 @@ struct ResultSet {
 		}
 	}
 	void getPrintableField(int*& arr) {
-		for (int k = 0; k < field.size(); k++) for (int i = field[k].f; i <= field[k].l; i++) arr[i] = field[k].function;
+		for (int k = 0; k < field.size(); k++) for (int i = field[k].f-1; i <= field[k].l-1; i++) arr[i] = field[k].function;
 	}
 	void clean() {
 		field.clear();
