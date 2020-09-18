@@ -1,7 +1,6 @@
 ﻿#include "SearchEngine.h"
 #include "iostream"
 #include "string"
-#include <conio.h>
 
 ResultSet* score = new ResultSet[11268];
 

@@ -482,15 +482,28 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
 		}
 	}
 	rankResult(ans, count, score);
+	int k = 0;
+	char c;
+	bool accept = false;
+	double time = close();
+	do {
+		system("cls");
+		if (!count)
+			cout << "No matches found in " << time << " second(s).\n\n";
+		else
+			cout << count << " matches found in " << time << " second(s).\n\n";
+		if (count) {
+			cout << "Printing result NO." << k << endl;
+			cout << score[ans[k]].score * -1 << endl;
+			writeText(ans[k], score, queryToHighlight);
+		}
+		c = _getch();
+		if ((int)c == 80) k++;
+		else if ((int)c == 72) k--;
+		if (k < 0) k = count - 1;
+		else if (k >= count) k = 0;
 
-	for (int i = 0; i < count; ++i) {
-		cout << score[ans[i]].score *-1 << endl;
-		writeText(ans[i], score, queryToHighlight);
-	}
-	if (!count)
-	    cout << "No matches found in " << close() << " second(s).\n\n";
-	else
-	    cout << count << " matches found in " << close() << " second(s).\n\n";
+	} while ((int)c != 13);
 }
 //used for general case
 void SearchEngine::addScore(string query, ResultSet*& score) {
@@ -518,6 +531,7 @@ void SearchEngine::operator5(string query, ResultSet*& score) {
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
 			score[i].score += files->pos.size();
+			score[i].addPos(files->pos, 3);
 			files = files->Next;
 		}
 		else
@@ -662,6 +676,7 @@ void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
 		score[max].score *= -1;
 	}
 }
+// Normal, Exact, +, -
 int func_toColor[3] = {40,44,45};
 void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
     string fileName = WORKPLACE + dataList[i];
@@ -683,7 +698,7 @@ void SearchEngine::writeText(int i, ResultSet*& rs, vector<string>& queries) {
 			toggle = false;
 		}
 		if(ch != ' ' && ch != '\n') toggle = true;
-		WriteInColor(func_toColor[func[pos]], ch);
+		WriteInColor(ch == '\n' ? func_toColor[0] : func_toColor[func[pos]], ch);
 	} while (ch != EOF);
 	delete func;
 	/*string txt;
