@@ -53,11 +53,11 @@ int main() {
 
 	//for (int i = 0; i<se.searchEngineNumOfDataFiles; i++) cout << se.dataList[i] << endl;
 
-    se.input_stop_words("../SearchEngine/Data/stopWords.txt");
+    se.input_stop_words(WORKPLACE + "stopWords.txt");
 	se.input();
 
 	//cout << TrieNode::numTrieNode << endl;
-	
+
 	string key = "";
 	
 	Trie history;
@@ -87,13 +87,13 @@ int main() {
 			TrieNode* sug = history.searchSuggestion(key);
 			history.getResult(sug, set);
 			if (t >= set.size()) t = 0;
-			
+
 			if (accept && t < set.size()) {
 				//Paste history into search key
 				key = set[t];
 				accept = false;
 			}
-			
+
 			//Print out the search
 			cout <<" >> "<< key << endl;
 			for (int i = 0; i < set.size(); i++) {

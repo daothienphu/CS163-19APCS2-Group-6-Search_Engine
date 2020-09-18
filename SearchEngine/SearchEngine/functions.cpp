@@ -541,7 +541,7 @@ void SearchEngine::operator9(vector<string> query, int*& score) {
 	typedef tuple <FileNode*, PosNode*, int> HeapNode;
 	//file - pos - word idx
 	auto heap_comp = [](const HeapNode& a, const HeapNode& b)
-	{
+    {
 		FileNode *aFile, *bFile;
 		PosNode *aPos, *bPos;
 		tie(aFile, aPos, ignore) = a;
