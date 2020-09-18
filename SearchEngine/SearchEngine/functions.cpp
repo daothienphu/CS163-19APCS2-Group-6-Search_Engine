@@ -419,6 +419,13 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 			w.back().function = flag;
 		}
 	}
+
+	auto comp = [](const SearchTask& a, const SearchTask& b)
+	{
+		return a.function < b.function;
+	};
+	sort(w.begin(), w.end(), comp);
+
 	return w;
 }
 
