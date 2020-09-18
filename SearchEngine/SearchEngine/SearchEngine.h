@@ -31,12 +31,11 @@ void start();
 double close();
 
 struct FileNode {
-    int file, num = 0;
+    int file;
 	vector<int> pos;
     FileNode *Next;
-	FileNode(int f, int n, FileNode* ne) {
+	FileNode(int f, FileNode* ne) {
 		file = f;
-		num = n;
 		Next = ne;
 	}
 };
@@ -80,23 +79,25 @@ struct Trie {
         map['$'] = 38;
 	}
 
-	void insert_sl(string Word);
-
-
 	void input(string &filename, int file);
     void input(ifstream& in, int file, bool inTitle = false);
 	void insert(string &Word, int file, int pos = -1, bool inTitle = false); //file == -1 if Word is stopword
     void search(string &Word, int ans[], int &count, bool inTitle = false);
-	
-	bool isStopWord(string Word);
+
+	//Phu
 	FileNode* searchFilesToScore(string& Word, bool intitle = false);
 
+	//Tuong
+	bool isStopWord(string Word);
+	void insert_sl(string Word);
 	TrieNode* getSuggestion(TrieNode* root, string Word);
 	TrieNode* searchSuggestion(string Word); 
 	void getResult(TrieNode* root, vector<string>& resultSet);
 	void saveTree(fstream& out,TrieNode* root);
 	void readTree(fstream& in,TrieNode* root);
 };
+
+//Tuong
 struct UI {
 	vector<string> content;
 	vector<string> sub_box;
@@ -105,6 +106,7 @@ struct UI {
 	int k=0;
 	void print();
 };
+
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
     vector<string> dataList;
@@ -118,13 +120,17 @@ struct SearchEngine {
 
 	void search(string &Word, int*& score);
 
-	void addScore(string query, int*& score);
+	void addScore(string query, int*& score);// Tuong checked
 	//   operator1 is "AND" - Tuong
 	//   operator2 is "OR" - Tuong
-	void operator3(string query, int*& score);
+	//   operator3 is "-" - Tuong
+	void operator3(string query, int*& score); // Tuong checked
 	void operator4(string query, int*& score);
-	void operator5(string query, int*& score);
-	void operator6(string filetype, int*& score);
+
+	//   operator5 is "+" - Tuong
+	void operator5(string query, int*& score); //Tuong checked
+	//   
+	void operator6(string filetype, int*& score); 
 	//   operator7 is "$" - DONE automatically
 	//   operator8 is "#" - DONE automatically
 	void operator9(vector<string> query, int*& score); //this is operator10

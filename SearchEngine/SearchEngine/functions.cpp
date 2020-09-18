@@ -127,14 +127,12 @@ void Trie::input(string &filename, int file) {
             if (tmp != root) { //check not consecutive space
                 if (!tmp->stopWord) {
                     if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-                        tmp->fileRoot = new FileNode (file, 0, tmp->fileRoot);
+                        tmp->fileRoot = new FileNode (file, tmp->fileRoot);
 					tmp->fileRoot->pos.emplace_back(pos);
-                    tmp->fileRoot->num++;
                     if (inTitle) {
                         if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
-                            tmp->inTitleRoot = new FileNode (file, 0, tmp->inTitleRoot);
+                            tmp->inTitleRoot = new FileNode (file, tmp->inTitleRoot);
 						tmp->inTitleRoot->pos.emplace_back(pos);
-                        tmp->inTitleRoot->num++;
                     }
                 }
 
@@ -181,15 +179,13 @@ void Trie::insert(string &Word, int file, int pos, bool inTitle) {
 	    tmp->stopWord = true;
 	else {
 	    if (tmp->fileRoot == nullptr || tmp->fileRoot->file != file)
-            tmp->fileRoot = new FileNode (file, 0, tmp->fileRoot);
+            tmp->fileRoot = new FileNode (file, tmp->fileRoot);
 		tmp->fileRoot->pos.emplace_back(pos);
-	    tmp->fileRoot->num++;
 
 	    if (inTitle) {
             if (tmp->inTitleRoot == nullptr || tmp->inTitleRoot->file != file)
-                tmp->inTitleRoot = new FileNode (file, 0, tmp->inTitleRoot);
+                tmp->inTitleRoot = new FileNode (file, tmp->inTitleRoot);
 			tmp->inTitleRoot->pos.emplace_back(pos);
-            tmp->inTitleRoot->num++;
 	    }
 	}
 }
@@ -467,7 +463,7 @@ void SearchEngine::search(string &Word, int*& score) {
 			case 7:
 				operator6(tasks[i].words[k], score);//  filetype:
 				break;
-			default:
+			case -1:
 				addScore(tasks[i].words[k], score);
 			}
 			if (tasks[i].function != 4 && tasks[i].function != 7)
@@ -494,7 +490,7 @@ void SearchEngine::addScore(string query, int*& score) {
 	files = root->searchFilesToScore(query);
 	query = getValidText(query);
 	for (files; files != nullptr; files = files->Next) {
-        if(score[files->file] >= 0) score[files->file] += files->num;
+        if(score[files->file] >= 0) score[files->file] += files->pos.size();
 	}
 };
 //only used for the word behind "filetype:" operator
@@ -510,7 +506,7 @@ void SearchEngine::operator5(string query, int*& score) {
 	
 	for (int i = searchEngineNumOfDataFiles - 1; i >= 0 && files != nullptr; i--)
 		if (i == files->file) {
-			score[i] += files->num;
+			score[i] += files->pos.size();
 			files = files->Next;
 		}
 		else
