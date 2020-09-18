@@ -19,6 +19,11 @@ using namespace std;
 #define STOPWORD -1
 #define INTITLE true
 
+#define BINARY_HISTORY_PATH "../SearchEngine/Data/history_bin.bin"
+#define STOPWORD_PATH "../SearchEngine/Data/stopWords.txt"
+#define DATA_PATH "../SearchEngine/Data/dataList.txt"
+#define MAX_QUERY_LENGTH 60
+
 const string WORKPLACE = "../SearchEngine/Data/";
 //const string WORKPLACE = "/Users/ducanchu/Documents/Assignments/CS163/CS163-19APCS2-Group-6-SearchEngine/SearchEngine/SearchEngine/Data/";
 
@@ -88,6 +93,8 @@ struct Trie {
 	TrieNode* getSuggestion(TrieNode* root, string Word);
 	TrieNode* searchSuggestion(string Word); 
 	void getResult(TrieNode* root, vector<string>& resultSet);
+	void saveTree(fstream& out,TrieNode* root);
+	void readTree(fstream& in,TrieNode* root);
 };
 struct UI {
 	vector<string> content;

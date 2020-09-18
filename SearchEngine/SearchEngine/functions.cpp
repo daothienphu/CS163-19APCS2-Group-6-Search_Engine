@@ -232,7 +232,37 @@ FileNode* Trie::searchFilesToScore(string& Word, bool intitle) {
 	if (tmp->stopWord) return nullptr;
 	return (intitle ? tmp->inTitleRoot : tmp->fileRoot);
 }
-
+string getCorrectString(string& s,int i) {
+	while (s.length() < i) s += ' ';
+	return s;
+}
+void Trie::saveTree(fstream& out, TrieNode* root) {
+	if (!out.is_open() ||root == nullptr) return;
+	int size = root->s.size();
+	out.write((char*)&size, sizeof(size));
+	out.write(root->s.c_str(), root->s.size());
+	string content = "";
+	for (int i = 0; i < trieCharSize; i++) content += (root->p[i] != nullptr ? '1' : '0');
+	out.write(content.c_str(), trieCharSize);
+	for (int i = 0; i < trieCharSize; i++) saveTree(out, root->p[i]);
+}
+void Trie::readTree(fstream& in, TrieNode* root) {
+	if (!in.is_open()) return;
+	string content;
+	int size = 0;
+	in.read((char*)&size, sizeof(size));
+	content.resize(size);
+	in.read((char*)&content[0], size);
+	root->s = content.c_str();
+	content.resize(trieCharSize);
+	in.read((char*)&content[0], trieCharSize);
+	for (int i = 0; i < trieCharSize; i++) {
+		if (content[i] == '1') {
+			root->p[i] = new TrieNode;
+			readTree(in, root->p[i]);
+		}
+	}
+}
 TrieNode* Trie::getSuggestion(TrieNode* root, string Word) {
 	if (root == nullptr) return root;
 	if (Word.length() == 0) return root;
@@ -416,7 +446,7 @@ void SearchEngine::search(string &Word, int*& score) {
 		for (int k = 0; k < tasks[i].words.size(); k++) {
 			switch (tasks[i].function) {
 			case 5:
-				operator9(tasks[i].words, score);//operator10 *
+				operator9(tasks[i].words, score);//operator10 * also search exact
 				break;
 			case 4:
 				operator3(tasks[i].words[k], score);//  -
@@ -614,7 +644,6 @@ void SearchEngine::rankResult(int ans[], int &count, int*& score) {
 }
 
 void SearchEngine::writeText(int i, vector<string>& queries) {
-	//string fileName = "../SearchEngine/Data/" + dataList[i];
     string fileName = WORKPLACE + dataList[i];
 	ifstream dataIn{ fileName };
 	string msg = "Found match(es) from " + fileName;
@@ -682,7 +711,7 @@ void UI::print() {
 	cout << (char)203;
 	printCharacter(maxQuery+offset_subbox_x*2, (char)205);
 	cout << (char)203;
-	printCharacter((offset_x * 2 + maxContent)/2- maxQuery /2-1 - offset_subbox_x, (char)205);
+	printCharacter((offset_x * 2 + maxContent)/2-maxQuery /2-1 - offset_subbox_x, (char)205);
 	cout << (char)188 << endl;
 	for (int i = 0; i < sub_box.size() + offset_subbox_y * 2; i++) {
 		printCharacter((offset_x * 2 + maxContent) / 2 - maxQuery / 2 - offset_subbox_x, ' ');

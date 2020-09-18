@@ -5,11 +5,6 @@
 
 int* score = new int[11268]{ 0 };
 
-#define HISTORY_PATH "../SearchEngine/Data/history.txt"
-#define STOPWORD_PATH "../SearchEngine/Data/stopWords.txt"
-#define DATA_PATH "../SearchEngine/Data/dataList.txt"
-#define MAX_QUERY_LENGTH 60
-
 void WriteColor(int color, string text) {
 	/*HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO cbInfo;
@@ -21,32 +16,22 @@ void WriteColor(int color, string text) {
 	cout << "\x1B[" << color << "m" << text << "\033[0m";
 }
 void loadHistory(Trie& history) {
-	ifstream input{ HISTORY_PATH };
-	string tmp; int k = 0;
-	if (!input.is_open()) {
-		cout << "Cannot read history" << endl;
-		return;
-	}
-	while (!input.eof()) {
-		getline(input, tmp);
-		if (tmp.length() <= 0) break;
-		k++;
-		history.insert_sl(tmp);
-	}
-	cout << "[DEBUG] Loaded history " << k << endl;
+	fstream history_f{ BINARY_HISTORY_PATH,ios::out | ios::in | ios::binary };
+	history.readTree(history_f, history.root);
+	history_f.close();
 }
 void saveHistory(Trie& history, string queries) {
 	if (queries.length() <= 0) return;
 	history.insert_sl(queries);
-	ofstream out;
-	out.open(HISTORY_PATH, ios::app);
-	out << queries << endl;
+
+	fstream history_f{ BINARY_HISTORY_PATH,ios::out | ios::in | ios::binary };
+	history.saveTree(history_f, history.root);
+	history_f.close();
 }
 
 int main() {
 	ifstream in;
     SearchEngine se;
-
     start();
     in.open(WORKPLACE + "___index.txt");
 	se.loadDataList(in);
