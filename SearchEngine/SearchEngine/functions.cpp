@@ -427,13 +427,6 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
 			w.back().function = flag;
 		}
 	}
-
-	auto comp = [](const SearchTask& a, const SearchTask& b)
-	{
-		return a.function < b.function;
-	};
-	sort(w.begin(), w.end(), comp);
-
 	return w;
 }
 
@@ -667,19 +660,7 @@ void SearchEngine::operator9(vector<string> query, ResultSet*& score) {
 	}
 }*/
 
-void SearchEngine::operator11(int a, int b, ResultSet*& score) {
-	for (int i = a; i <= b; i++)
-	{
-		string word = "$" + toString(i);
-		FileNode* files = root->searchFilesToScore(word);
 
-		for (; files != nullptr; files = files->Next)
-		{
-			score[files->file].score += files->pos.size();
-			score[files->file].addPos(files->pos, 1);
-		}
-	}
-}
 
 void SearchEngine::rankResult(int ans[], int &count, ResultSet*& score) {
 	count = 0;
