@@ -9,6 +9,7 @@
 #include <queue>
 #include <utility>
 #include <tuple>
+#include <unordered_map>
 #include <conio.h>
 
 using namespace std;
@@ -46,6 +47,7 @@ struct FileNode {
 };
 struct SearchTask {
     int function = -1;
+    bool curr;
     vector<string> words;
     vector<string> words2;
     bool isEmpty() {
@@ -136,6 +138,8 @@ struct UI {
 struct SearchEngine {
     int searchEngineNumOfDataFiles;
     vector<string> dataList;
+    vector<vector<string>> Synonyms;
+    unordered_map<string, int> synMap;
     Trie *root = new Trie;
 
     void loadDataList(ifstream &in);
@@ -163,7 +167,8 @@ struct SearchEngine {
     vector<int> operator9(vector<string> query, ResultSet*& score); //this is operator10
     //   operator11 is "$" - Thien
     //   operator12 is "~" - An
-    void operator11(int a, int b, ResultSet*& score);
+    void operator11(int a, int b, bool curr, ResultSet*& score);
+    void operator12(string query, ResultSet*& score);
 
     void rankResult(int ans[], int &count, ResultSet*& score);
 
@@ -178,4 +183,5 @@ struct SearchEngine {
     void loadData();
     void index();
     void reIndex();
+    void loadSynonyms();
 };

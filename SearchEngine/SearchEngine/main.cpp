@@ -21,12 +21,32 @@ int main() {
     SearchEngine se;
 
     start();
+    se.loadSynonyms();
+
+    start();
     se.loadData();
 
     string key = "";
 
     Trie history;
     loadHistory(history);
+
+//    while (1) {
+//        cout << "What do you want to search? ('exit' to exit) ";
+//        getline(cin, key);
+//        if (key == "exit")
+//            break;
+//        if (key == "index") {
+//            se.index();
+//            continue;
+//        }
+//        if (key == "reindex") {
+//            se.reIndex();
+//            continue;
+//        }
+//        start();
+//        se.search(key, score);
+//    }
 
     UI ui;
     ui.content.push_back("                             _        ___                               ");
@@ -70,15 +90,17 @@ int main() {
             break;
         if (key == "/index") {
             se.index();
-            continue;
+            //continue;
         }
         if (key == "/reindex") {
             se.reIndex();
-            continue;
+            //continue;
+        } else {
+            saveHistory(history, key);
+            start();
+            se.search(key, score);
         }
-        saveHistory(history, key);
-        start();
-        se.search(key, score);
+
         //Reset and start new search
         key = "";
         accept = false;

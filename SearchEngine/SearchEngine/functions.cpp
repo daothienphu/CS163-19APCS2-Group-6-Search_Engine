@@ -300,7 +300,7 @@ void SearchEngine::loadDataList(ifstream &in) {
 
     searchEngineNumOfDataFiles = dataList.size();
 
-    cout << "Data list loaded in " << close() << " second(s).\n";
+    cout << "Data list loaded in " << close() * 1000 << " millisecond(s).\n";
 }
 void SearchEngine::input_stop_words(string path) {
     ifstream input;
@@ -320,7 +320,7 @@ void SearchEngine::input_stop_words(string path) {
         numStopWords++;
     }
 
-    cout << numStopWords << " stop words loaded successfully in " << close() * 1000 << " millisecond(s).\n";
+    cout << numStopWords << " stop word(s) loaded in " << close() * 1000 << " millisecond(s).\n";
 }
 void SearchEngine::input(int st) {
     int progress = 0, p;
@@ -335,7 +335,6 @@ void SearchEngine::input(int st) {
         root->input(fileName, i);
         //root->input(dataIn, i);
     }
-    cout << searchEngineNumOfDataFiles << " data files loaded successfully in " << close() * 1000 << " millisecond(s).\n\n";
 }
 
 int getFlag(string Word) {
@@ -343,9 +342,10 @@ int getFlag(string Word) {
     if (Word == "OR") return 1;
     if (Word.length() >= 7 && Word.substr(0, 7) == "intitle") return 6;
     if (Word.length() >= 8 && Word.substr(0, 8) == "filetype") return 7;
+    if (Word.find("..") != string::npos) return 2; // in range a..b
     switch (Word[0]) {
-        case '$':
-            return 2;
+//        case '$':
+//            return 2;
         case '+':
             return 3;
         case '-':
@@ -354,10 +354,12 @@ int getFlag(string Word) {
             return 5;
         case '#':
             return 8;
+        case '~':
+            return 9;
     }
     switch (Word[Word.length() - 1]) {
-        case '$':
-            return 2;
+//        case '$':
+//            return 2;
         case '+':
             return 3;
         case '-':
@@ -411,6 +413,14 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
                 need_push = true;
                 continue;
             }
+            if (flag == 9) {
+                if (!w.back().isEmpty()) w.push_back(SearchTask());
+                w.back().function = flag;
+                removeParamenter(s[i], '~');
+                w.back().words.push_back(getValidText(s[i]));
+                need_push = true;
+                continue;
+            }
             if (flag == 8) {
                 if (!w.back().isEmpty()) w.push_back(SearchTask());
                 w.back().function = flag;
@@ -431,16 +441,34 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
             }
             if (flag == 2) {
                 w.back().function = flag;
-                removeParamenter(s[i], '$');
-                int k = -1, k1 = -1;
-                for (int l = 0; l < s[i].length(); l++) if (s[i][l] == '.') {
-                        if (k == -1) k = l;
-                        else k1 = l;
+                w.back().curr = (s[i].find('$') != string::npos);
+                string r; //cout << s[i] << endl;
+                s[i].push_back('.');
+//                removeParamenter(s[i], '$');
+//                int k = -1, k1 = -1;
+//                for (int l = 0; l < s[i].length(); l++) if (s[i][l] == '.') {
+//                        if (k == -1) k = l;
+//                        else k1 = l;
+//                    }
+//                if (k != -1) {
+//                    w.back().words.push_back(getValidText(s[i].substr(0,k)));
+//                    w.back().words2.push_back(getValidText(s[i].substr(k1,s[i].length()-k1)));
+//                }else w.back().words.push_back(getValidText(s[i]));
+                for (int l = 0; l<s[i].size(); l++)
+                    if (s[i][l] != '.') {
+                        if (s[i][l] >= '0' && s[i][l] <= '9')
+                            r.push_back(s[i][l]);
+                    } else if (r.size()) {
+                        if (w.back().words.size() == 0) {
+                            w.back().words.push_back(r);
+                            r.clear();
+                            continue;
+                        } else if (w.back().words2.size() == 0) {
+                            w.back().words2.push_back(r);
+                            r.clear();
+                            continue;
+                        }
                     }
-                if (k != -1) {
-                    w.back().words.push_back(getValidText(s[i].substr(0,k)));
-                    w.back().words2.push_back(getValidText(s[i].substr(k1,s[i].length()-k1)));
-                }else w.back().words.push_back(getValidText(s[i]));
                 need_push = true;
                 continue;
             }
@@ -466,7 +494,7 @@ string func_toString[7] = { "Result for single words",
                             "Result for + operator",
                             "Result for single words search",
                             "Result for intitle search", "Result for $..$ or $ search", "Result for # search"};
-int func_toColor[7] = { 40,44,41,45,43,42,104 };
+int func_toColor[7] = { 0,44,41,45,43,42,104 };
 void SearchEngine::search(string &Word, ResultSet*& score) {
     int count = 0, ans[5];
     vector<SearchTask> tasks = breakDown(Word);
@@ -517,10 +545,11 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
                 case 8:
                     operator8(tasks[i].words[k], score);// #
                     break;
+                case 9:
+                    operator12(tasks[i].words[k], score); // ~
+                    break;
                 case 2:
-                    operator11(stoi(tasks[i].words[k]), (tasks[i].words2.size() <= 0 ?
-                                                         stoi(tasks[i].words[k])
-                                                                                     : stoi(tasks[i].words2[0])), score);
+                    operator11(stoi(tasks[i].words[k]), stoi(tasks[i].words2[0]), tasks[i].curr, score);
                     break;
                 case -1:
                     addScore(tasks[i].words[k], score);
@@ -561,7 +590,7 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
         if (k < 0) k = count - 1;
         else if (k >= count) k = 0;
 
-    } while ((int)c != 13);
+    } while ((int) c != 13);
 }
 //used for general case
 void SearchEngine::addScore(string query, ResultSet*& score) {
@@ -574,7 +603,26 @@ void SearchEngine::addScore(string query, ResultSet*& score) {
             score[files->file].addPos(files->pos, 3);
         }
     }
-};
+}
+
+void SearchEngine::operator12(string query, ResultSet *&score) {
+    FileNode* files;
+    int syn = synMap[query] - 1; cout << syn << endl;
+
+    for (int i = 0; i<Synonyms[syn].size(); i++) {
+        query = Synonyms[syn][i];
+
+        files = root->searchFilesToScore(query);
+        query = getValidText(query);
+        for (files; files != nullptr; files = files->Next) {
+            if (score[files->file].score >= 0) {
+                score[files->file].score += files->pos.size();
+                score[files->file].addPos(files->pos, 3);
+            }
+        }
+    }
+}
+
 //only used for the word behind "filetype:" operator
 void SearchEngine::operator6(string filetype, ResultSet*& score) {
     for (int i = 0; i < searchEngineNumOfDataFiles; i++)
@@ -607,10 +655,10 @@ vector<int> SearchEngine::operator5(string query, ResultSet*& score) {
             score[i].score = -1;
     return resultSet;
 }
-void SearchEngine::operator11(int a, int b, ResultSet*& score) {
+void SearchEngine::operator11(int a, int b, bool curr, ResultSet*& score) {
     for (int i = a; i <= b; i++)
     {
-        string word = "$" + toString(i);
+        string word = (curr ? "$" + toString(i) : toString(i));
         FileNode* files = root->searchFilesToScore(word);
 
         for (; files != nullptr; files = files->Next)
@@ -783,7 +831,7 @@ void SearchEngine::writeText(int i, ResultSet*& rs) {
             toggle = false;
         }
         if(ch != ' ' && ch != '\n') toggle = true;
-        WriteInColor(((title && func[pos] == 0) ? 100 : func_toColor[func[pos]]), ch);
+        WriteInColor(((title && func[pos] == 0) ? 100 : (toggle ? func_toColor[func[pos]] : 0)), ch);
 
         if (ch == '.') title = false;
     } while (ch != EOF);
@@ -935,6 +983,28 @@ void SearchEngine::reIndex() {
     input(st);
     in.close();
     cout << searchEngineNumOfDataFiles - st << " extra data file(s) loaded successfully in " << close() * 1000 << " millisecond(s).\n\n";
+}
+
+void SearchEngine::loadSynonyms() {
+    ifstream in {WORKPLACE + "synonyms.txt"};
+    if (!in.is_open()) {
+        cout << "Synonyms could not be loaded.\n\n";
+        return;
+    }
+
+    int size;
+    in >> size;
+    Synonyms.resize(size);
+    for (int i = 0; i<Synonyms.size(); i++) {
+        in >> size;
+        Synonyms[i].resize(size);
+        for (int j = 0; j<Synonyms[i].size(); j++) {
+            in >> Synonyms[i][j];
+            synMap[Synonyms[i][j]] = i+1;
+        }
+    }
+
+    cout << Synonyms.size() << " synonym(s) loaded in " << close() * 1000 << " millisecond(s).\n";
 }
 
 #pragma endregion
