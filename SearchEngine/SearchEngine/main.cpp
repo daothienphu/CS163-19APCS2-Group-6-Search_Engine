@@ -70,7 +70,7 @@ int main() {
             else if ((int)c == 72) ui.k--;
             else if ((int)c == 77) accept = true;
             else if((true) && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
-                               (c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',' || c == '*' || c == '"' || c == ':' || c == '#')) key += c;
+                               (c >= 'A' && c <= 'Z') || c == ' ' || c == '+' || c == '-' || c == '$' || c == '.' || c == ',' || c == '*' || c == '"' || c == ':' || c == '#' || c == '~')) key += c;
             if (ui.k < 0) ui.k = 0;
             //Search
             TrieNode* sug = history.searchSuggestion(key);
@@ -88,11 +88,11 @@ int main() {
         } while ((int)c != 13 || key.length() <= 0);
         if (key == "exit")
             break;
-        if (key == "/index") {
+        if (key == "index") {
             se.index();
             //continue;
-        }
-        if (key == "/reindex") {
+        } else
+        if (key == "reindex") {
             se.reIndex();
             //continue;
         } else {

@@ -23,7 +23,7 @@ using namespace std;
 
 #define MAX_QUERY_LENGTH 55
 
-#define MAX_WORDS_DATA 100000
+#define MAX_WORDS_DATA 10000
 
 const string WORKPLACE = "../SearchEngine/Data/";
 //const string WORKPLACE = "/Users/ducanchu/Documents/Assignments/CS163/CS163-19APCS2-Group-6-SearchEngine/SearchEngine/SearchEngine/Data/";
@@ -69,7 +69,10 @@ struct ResultSet {
         }
     }
     void getPrintableField(int*& arr) {
-        for (int k = 0; k < field.size(); k++) for (int i = field[k].f-1; i <= field[k].l-1; i++) arr[i] = field[k].function;
+        if (field.size() > 1000) field.clear();
+        for (int k = 0; k < field.size(); k++) {
+            for (int i = field[k].f - 1 > 0 ? field[k].f - 1 : 0; i <= field[k].l - 1; i++) arr[i] = field[k].function;
+        }
     }
     void clean() {
         field.clear();

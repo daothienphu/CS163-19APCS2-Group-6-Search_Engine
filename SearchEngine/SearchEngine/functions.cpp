@@ -342,7 +342,7 @@ int getFlag(string Word) {
     if (Word == "OR") return 1;
     if (Word.length() >= 7 && Word.substr(0, 7) == "intitle") return 6;
     if (Word.length() >= 8 && Word.substr(0, 8) == "filetype") return 7;
-    if (Word.find("..") != string::npos) return 2; // in range a..b
+    if (Word.find("..") != string::npos) return 10; // in range a..b
     switch (Word[0]) {
 //        case '$':
 //            return 2;
@@ -439,7 +439,8 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
                 w.back().function = flag;
                 continue;
             }
-            if (flag == 2) {
+            if (flag == 10) {
+                if (!w.back().isEmpty() && w.back().function != flag) w.push_back(SearchTask());
                 w.back().function = flag;
                 w.back().curr = (s[i].find('$') != string::npos);
                 string r; //cout << s[i] << endl;
@@ -468,7 +469,7 @@ vector<SearchTask> SearchEngine::breakDown(string txt) {
                             r.clear();
                             continue;
                         }
-                    }
+                    }cout << w.back().words[0] << " " << w.back().words2[0] << endl;
                 need_push = true;
                 continue;
             }
@@ -548,8 +549,8 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
                 case 9:
                     operator12(tasks[i].words[k], score); // ~
                     break;
-                case 2:
-                    operator11(stoi(tasks[i].words[k]), stoi(tasks[i].words2[0]), tasks[i].curr, score);
+                case 10:
+                    operator11(stoi(tasks[i].words[0]), stoi(tasks[i].words2[0]), tasks[i].curr, score);
                     break;
                 case -1:
                     addScore(tasks[i].words[k], score);
@@ -560,7 +561,6 @@ void SearchEngine::search(string &Word, ResultSet*& score) {
             //time = time1;
         }
     }
-    //_getch();
     rankResult(ans, count, score);
     int k = 0;
     char c;
