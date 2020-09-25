@@ -83,7 +83,7 @@ int main() {
                 key = ui.sub_box[ui.k];
                 accept = false;
             }
-            ui.content.back() = "    Search: " + (key.length() > MAX_QUERY_LENGTH ? "..."+key.substr(key.length()-1-MAX_QUERY_LENGTH+3,MAX_QUERY_LENGTH-3) : key);
+            ui.content.back() = "    Search: " + (key.length() > MAX_QUERY_LENGTH ? "..."+key.substr(key.length()-1-MAX_QUERY_LENGTH+3,MAX_QUERY_LENGTH-2) : key);
             ui.print();
         } while ((int)c != 13 || key.length() <= 0);
         if (key == "exit")
